@@ -126,7 +126,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
      * - linguistic analysis (each lemma is associated with the set of senses taken from the oracle).
      * - sense filtering (elimination of irrelevant to context structure senses)
      *
-     * @param context context to be prepocessed
+     * @param context context to be preprocessed
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
     public void preprocess(IContext context) throws ContextPreprocessorException {

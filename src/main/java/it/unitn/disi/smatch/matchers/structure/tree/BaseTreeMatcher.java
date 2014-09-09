@@ -9,7 +9,7 @@ import it.unitn.disi.smatch.matchers.structure.node.INodeMatcher;
 import java.util.Properties;
 
 /**
- * Base class for tree matchers. Needs the following configuration parameters"
+ * Base class for tree matchers. Needs the following configuration parameters:
  * <p/>
  * nodeMatcher string parameter which should point to a class implementing a
  * {@link it.unitn.disi.smatch.matchers.structure.node.INodeMatcher} interface.

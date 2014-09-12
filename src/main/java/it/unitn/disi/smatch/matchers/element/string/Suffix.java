@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.matchers.element.string;
 
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.IStringBasedElementLevelSemanticMatcher;
 
@@ -11,7 +10,7 @@ import it.unitn.disi.smatch.matchers.element.IStringBasedElementLevelSemanticMat
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class Suffix extends Configurable implements IStringBasedElementLevelSemanticMatcher {
+public class Suffix implements IStringBasedElementLevelSemanticMatcher {
 
     /**
      * Computes the relation with suffix matcher.

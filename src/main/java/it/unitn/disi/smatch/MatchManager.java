@@ -1,7 +1,5 @@
 package it.unitn.disi.smatch;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.classifiers.IContextClassifier;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
@@ -12,20 +10,17 @@ import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.filters.IMappingFilter;
 import it.unitn.disi.smatch.loaders.context.IBaseContextLoader;
-import it.unitn.disi.smatch.loaders.context.IContextLoader;
 import it.unitn.disi.smatch.loaders.mapping.IMappingLoader;
-import it.unitn.disi.smatch.matchers.element.IMatcherLibrary;
+import it.unitn.disi.smatch.matchers.element.IElementMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.ITreeMatcher;
-import it.unitn.disi.smatch.oracles.ILinguisticOracle;
-import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.preprocessors.IContextPreprocessor;
 import it.unitn.disi.smatch.renderers.context.IBaseContextRenderer;
-import it.unitn.disi.smatch.renderers.context.IContextRenderer;
 import it.unitn.disi.smatch.renderers.mapping.IMappingRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Properties;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 /**
  * MatchManager controls the process of matching, loads contexts and performs other auxiliary work.
@@ -33,87 +28,60 @@ import java.util.Properties;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class MatchManager extends Configurable implements IMatchManager {
+public class MatchManager implements IMatchManager {
 
     private static final Logger log = LoggerFactory.getLogger(MatchManager.class);
 
-    // component configuration keys and component instance variables
-    public static final String CONTEXT_LOADER_KEY = "ContextLoader";
-    private IBaseContextLoader contextLoader = null;
+    private final IBaseContextLoader contextLoader;
 
-    public static final String CONTEXT_RENDERER_KEY = "ContextRenderer";
-    private IBaseContextRenderer contextRenderer = null;
+    private final IBaseContextRenderer contextRenderer;
 
-    public static final String MAPPING_LOADER_KEY = "MappingLoader";
-    private IMappingLoader mappingLoader = null;
+    private final IMappingLoader mappingLoader;
 
-    public static final String MAPPING_RENDERER_KEY = "MappingRenderer";
-    private IMappingRenderer mappingRenderer = null;
+    private final IMappingRenderer mappingRenderer;
 
-    public static final String MAPPING_FILTER_KEY = "MappingFilter";
-    private IMappingFilter mappingFilter = null;
+    private final IMappingFilter mappingFilter;
 
-    public static final String CONTEXT_PREPROCESSOR_KEY = "ContextPreprocessor";
-    private IContextPreprocessor contextPreprocessor = null;
+    private final IMappingFactory mappingFactory;
 
-    public static final String CONTEXT_CLASSIFIER_KEY = "ContextClassifier";
-    private IContextClassifier contextClassifier = null;
+    private final IContextPreprocessor contextPreprocessor;
 
-    public static final String MATCHER_LIBRARY_KEY = "MatcherLibrary";
-    private IMatcherLibrary matcherLibrary = null;
+    private final IContextClassifier contextClassifier;
 
-    public static final String TREE_MATCHER_KEY = "TreeMatcher";
-    private ITreeMatcher treeMatcher = null;
+    private final IElementMatcher elementMatcher;
 
-    public static final String SENSE_MATCHER_KEY = "SenseMatcher";
-    private ISenseMatcher senseMatcher = null;
+    private final ITreeMatcher treeMatcher;
 
-    public static final String LINGUISTIC_ORACLE_KEY = "LinguisticOracle";
-    private ILinguisticOracle linguisticOracle = null;
-
-    public static final String MAPPING_FACTORY_KEY = "MappingFactory";
-    private IMappingFactory mappingFactory = null;
-
-    public static IMatchManager getInstance() throws SMatchException {
-        return new MatchManager();
+    public static IMatchManager getInstanceFromResource(String... paths) {
+        ApplicationContext applicationContext = new ClassPathXmlApplicationContext(paths);
+        return (IMatchManager) applicationContext.getBean("matchManager");
     }
 
-    public MatchManager() throws SMatchException {
-        super();
+    public static IMatchManager getInstanceFromConfigFile(String... paths) {
+        ApplicationContext applicationContext = new FileSystemXmlApplicationContext(paths);
+        return (IMatchManager) applicationContext.getBean("matchManager");
     }
 
-    /**
-     * Constructor class with initialization.
-     *
-     * @param propFileName the name of the properties file
-     * @throws SMatchException SMatchException
-     */
-    public MatchManager(String propFileName) throws SMatchException {
-        this();
-
-        // update properties
-        try {
-            setProperties(propFileName);
-        } catch (ConfigurableException e) {
-            throw new SMatchException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Constructor class with initialization.
-     *
-     * @param properties the properties
-     * @throws SMatchException SMatchException
-     */
-    public MatchManager(Properties properties) throws SMatchException {
-        this();
-
-        // update properties
-        try {
-            setProperties(properties);
-        } catch (ConfigurableException e) {
-            throw new SMatchException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        }
+    public MatchManager(IBaseContextLoader contextLoader,
+                        IBaseContextRenderer contextRenderer,
+                        IMappingLoader mappingLoader,
+                        IMappingRenderer mappingRenderer,
+                        IMappingFilter mappingFilter,
+                        IMappingFactory mappingFactory,
+                        IContextPreprocessor contextPreprocessor,
+                        IContextClassifier contextClassifier,
+                        IElementMatcher elementMatcher,
+                        ITreeMatcher treeMatcher) {
+        this.contextLoader = contextLoader;
+        this.contextRenderer = contextRenderer;
+        this.mappingLoader = mappingLoader;
+        this.mappingRenderer = mappingRenderer;
+        this.mappingFilter = mappingFilter;
+        this.mappingFactory = mappingFactory;
+        this.contextPreprocessor = contextPreprocessor;
+        this.contextClassifier = contextClassifier;
+        this.elementMatcher = elementMatcher;
+        this.treeMatcher = treeMatcher;
     }
 
     public IContext createContext() {
@@ -191,7 +159,7 @@ public class MatchManager extends Configurable implements IMatchManager {
     }
 
     public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws SMatchException {
-        if (null == matcherLibrary) {
+        if (null == elementMatcher) {
             throw new SMatchException("Matcher library is not configured.");
         }
 
@@ -204,7 +172,7 @@ public class MatchManager extends Configurable implements IMatchManager {
         }
 
         log.info("Element level matching...");
-        final IContextMapping<IAtomicConceptOfLabel> acolMapping = matcherLibrary.elementLevelMatching(sourceContext, targetContext);
+        final IContextMapping<IAtomicConceptOfLabel> acolMapping = elementMatcher.elementLevelMatching(sourceContext, targetContext);
         log.info("Element level matching finished");
         return acolMapping;
     }
@@ -245,37 +213,6 @@ public class MatchManager extends Configurable implements IMatchManager {
         IContextMapping<INode> result = online(sourceContext, targetContext);
         log.info("Matching finished");
         return result;
-    }
-
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        if (log.isInfoEnabled()) {
-            log.info("Loading configuration...");
-        }
-        Properties oldProperties = new Properties();
-        oldProperties.putAll(properties);
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            // global ones
-            linguisticOracle = (ILinguisticOracle) configureComponent(linguisticOracle, oldProperties, newProperties, "linguistic oracle", LINGUISTIC_ORACLE_KEY, ILinguisticOracle.class);
-            senseMatcher = (ISenseMatcher) configureComponent(senseMatcher, oldProperties, newProperties, "sense matcher", SENSE_MATCHER_KEY, ISenseMatcher.class);
-            mappingFactory = (IMappingFactory) configureComponent(mappingFactory, oldProperties, newProperties, "mapping factory", MAPPING_FACTORY_KEY, IMappingFactory.class);
-
-            contextLoader = (IContextLoader) configureComponent(contextLoader, oldProperties, newProperties, "context loader", CONTEXT_LOADER_KEY, IContextLoader.class);
-            contextRenderer = (IContextRenderer) configureComponent(contextRenderer, oldProperties, newProperties, "context renderer", CONTEXT_RENDERER_KEY, IContextRenderer.class);
-            mappingLoader = (IMappingLoader) configureComponent(mappingLoader, oldProperties, newProperties, "mapping loader", MAPPING_LOADER_KEY, IMappingLoader.class);
-            mappingRenderer = (IMappingRenderer) configureComponent(mappingRenderer, oldProperties, newProperties, "mapping renderer", MAPPING_RENDERER_KEY, IMappingRenderer.class);
-            mappingFilter = (IMappingFilter) configureComponent(mappingFilter, oldProperties, newProperties, "mapping filter", MAPPING_FILTER_KEY, IMappingFilter.class);
-            contextPreprocessor = (IContextPreprocessor) configureComponent(contextPreprocessor, oldProperties, newProperties, "context preprocessor", CONTEXT_PREPROCESSOR_KEY, IContextPreprocessor.class);
-            contextClassifier = (IContextClassifier) configureComponent(contextClassifier, oldProperties, newProperties, "context classifier", CONTEXT_CLASSIFIER_KEY, IContextClassifier.class);
-            matcherLibrary = (IMatcherLibrary) configureComponent(matcherLibrary, oldProperties, newProperties, "matching library", MATCHER_LIBRARY_KEY, IMatcherLibrary.class);
-            treeMatcher = (ITreeMatcher) configureComponent(treeMatcher, oldProperties, newProperties, "tree matcher", TREE_MATCHER_KEY, ITreeMatcher.class);
-        }
-        return result;
-    }
-
-    public Properties getProperties() {
-        return properties;
     }
 
     public void preprocess(IContext context) throws SMatchException {

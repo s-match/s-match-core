@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.data.matrices;
 
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 
 import java.util.Arrays;
@@ -11,7 +10,7 @@ import java.util.Arrays;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class MatchMatrix extends Configurable implements IMatchMatrix, IMatchMatrixFactory {
+public class MatchMatrix implements IMatchMatrix, IMatchMatrixFactory {
 
     private int x = 0;
     private int y = 0;

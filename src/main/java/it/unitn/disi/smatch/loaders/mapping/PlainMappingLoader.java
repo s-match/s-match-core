@@ -1,11 +1,13 @@
 package it.unitn.disi.smatch.loaders.mapping;
 
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.data.util.MappingProgressContainer;
 import it.unitn.disi.smatch.loaders.ILoader;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,9 +15,6 @@ import java.util.HashMap;
 
 /**
  * Loads the mapping as written by {@link it.unitn.disi.smatch.renderers.mapping.PlainMappingRenderer}.
- * <p/>
- * Needs mappingFactory configuration parameter, which should point to an instance of a class implementing
- * {@link it.unitn.disi.smatch.data.mappings.IMappingFactory} interface.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
@@ -23,8 +22,12 @@ public class PlainMappingLoader extends BaseFileMappingLoader {
 
     private static final Logger log = LoggerFactory.getLogger(PlainMappingLoader.class);
 
+    protected PlainMappingLoader(IMappingFactory mappingFactory) {
+        super(mappingFactory);
+    }
+
     @Override
-    protected void process(IContextMapping<INode> mapping, IContext source, IContext target, BufferedReader reader) throws IOException {
+    protected void process(IContextMapping<INode> mapping, IContext source, IContext target, BufferedReader reader, MappingProgressContainer progressContainer) throws IOException {
         HashMap<String, INode> sNodes = createHash(source);
         HashMap<String, INode> tNodes = createHash(target);
 
@@ -62,16 +65,14 @@ public class PlainMappingLoader extends BaseFileMappingLoader {
 
                 if ((null != sourceNode) && (null != targetNode)) {
                     mapping.setRelation(sourceNode, targetNode, rel);
-                    countRelation(rel);
-                    cntLoaded++;
+                    progressContainer.countRelation(rel);
+                    progressContainer.progress();
                 } else {
                     if (log.isWarnEnabled()) {
                         log.warn("Could not find mapping: " + line);
                     }
                 }
             }
-
-            reportProgress();
         }
     }
 
@@ -103,7 +104,7 @@ public class PlainMappingLoader extends BaseFileMappingLoader {
      * @return a hash table which contains path from root to node for each node
      */
     protected HashMap<String, INode> createHash(IContext context) {
-        HashMap<String, INode> result = new HashMap<String, INode>();
+        HashMap<String, INode> result = new HashMap<>();
 
         int nodeCount = 0;
         for (INode node : context.getNodesList()) {

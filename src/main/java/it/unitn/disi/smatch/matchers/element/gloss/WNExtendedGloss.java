@@ -1,16 +1,14 @@
 package it.unitn.disi.smatch.matchers.element.gloss;
 
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
 import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
+import it.unitn.disi.smatch.oracles.ILinguisticOracle;
+import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.oracles.LinguisticOracleException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Properties;
 import java.util.StringTokenizer;
 
 /**
@@ -24,28 +22,30 @@ import java.util.StringTokenizer;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class WNExtendedGloss extends BasicGlossMatcher implements ISenseGlossBasedElementLevelSemanticMatcher {
-
-    private static final String THRESHOLD_KEY = "threshold";
-    private int threshold = 5;
+public class WNExtendedGloss extends BaseGlossMatcher implements ISenseGlossBasedElementLevelSemanticMatcher {
 
     // the words which are cut off from the area of discourse
-    private static final String MEANINGLESS_WORDS_KEY = "meaninglessWords";
-    private String meaninglessWords = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
+    public final static String DEFAULT_MEANINGLESS_WORDS = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(THRESHOLD_KEY)) {
-                threshold = Integer.parseInt(newProperties.getProperty(THRESHOLD_KEY));
-            }
+    protected final int threshold;
+    protected final String meaninglessWords;
 
-            if (newProperties.containsKey(MEANINGLESS_WORDS_KEY)) {
-                meaninglessWords = newProperties.getProperty(MEANINGLESS_WORDS_KEY) + " ";
-            }
-        }
-        return result;
+    public WNExtendedGloss(ILinguisticOracle linguisticOracle, ISenseMatcher senseMatcher) {
+        super(linguisticOracle, senseMatcher);
+        this.threshold = 5;
+        this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
+    }
+
+    public WNExtendedGloss(ILinguisticOracle linguisticOracle, ISenseMatcher senseMatcher, int threshold) {
+        super(linguisticOracle, senseMatcher);
+        this.threshold = threshold;
+        this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
+    }
+
+    public WNExtendedGloss(ILinguisticOracle linguisticOracle, ISenseMatcher senseMatcher, int threshold, String meaninglessWords) {
+        super(linguisticOracle, senseMatcher);
+        this.threshold = threshold;
+        this.meaninglessWords = meaninglessWords;
     }
 
     /**

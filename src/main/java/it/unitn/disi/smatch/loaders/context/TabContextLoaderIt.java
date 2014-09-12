@@ -14,7 +14,7 @@ public class TabContextLoaderIt extends TabContextLoader {
 
     @Override
     protected void createIds(IContext result) {
-        nodesParsed = 0;
+        int nodesParsed = 0;
         for (Iterator<INode> i = result.getNodes(); i.hasNext();) {
             i.next().getNodeData().setId("n" + Integer.toString(nodesParsed));
             nodesParsed++;

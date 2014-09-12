@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.renderers.mapping;
 
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.loaders.ILoader;
@@ -10,7 +9,7 @@ import it.unitn.disi.smatch.loaders.ILoader;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class ZeroMappingRenderer extends Configurable implements IMappingRenderer {
+public class ZeroMappingRenderer implements IMappingRenderer {
 
     public void render(IContextMapping<INode> mapping, String outputFile) throws MappingRendererException {
         //does nothing

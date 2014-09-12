@@ -4,6 +4,8 @@ import it.unitn.disi.smatch.data.trees.Context;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.loaders.ILoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,12 +31,14 @@ import java.util.ArrayList;
  */
 public class TabContextLoader extends BaseFileContextLoader<IContext> implements IContextLoader {
 
+    private static final Logger log = LoggerFactory.getLogger(TabContextLoader.class);
+
     @Override
     protected IContext process(BufferedReader input) throws IOException {
         IContext result = new Context();
-        ArrayList<INode> rootPath = new ArrayList<INode>();
+        ArrayList<INode> rootPath = new ArrayList<>();
 
-        nodesParsed = 0;
+        int nodesParsed = 0;
         //loads the root node
         final String rootName = input.readLine();
         if (null != rootName) {
@@ -80,6 +84,7 @@ public class TabContextLoader extends BaseFileContextLoader<IContext> implements
                 nodesParsed++;
             }
         }
+        log.info("Parsed nodes:\t" + nodesParsed);
         return result;
     }
 

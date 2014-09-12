@@ -1,12 +1,9 @@
 package it.unitn.disi.smatch.matchers.element.gloss;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
 
-import java.util.Properties;
 import java.util.StringTokenizer;
 
 /**
@@ -21,28 +18,18 @@ import java.util.StringTokenizer;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class WNGlossComparison extends Configurable implements ISenseGlossBasedElementLevelSemanticMatcher {
+public class WNGlossComparison extends WNGloss implements ISenseGlossBasedElementLevelSemanticMatcher {
 
-    private static final String THRESHOLD_KEY = "threshold";
-    private int threshold = 2;
+    public WNGlossComparison() {
+        super(2);
+    }
 
-    // the words which are cut off from the area of discourse
-    private static final String MEANINGLESS_WORDS_KEY = "meaninglessWords";
-    private String meaninglessWords = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
+    public WNGlossComparison(int threshold) {
+        super(threshold);
+    }
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(THRESHOLD_KEY)) {
-                threshold = Integer.parseInt(newProperties.getProperty(THRESHOLD_KEY));
-            }
-
-            if (newProperties.containsKey(MEANINGLESS_WORDS_KEY)) {
-                meaninglessWords = newProperties.getProperty(MEANINGLESS_WORDS_KEY) + " ";
-            }
-        }
-        return result;
+    public WNGlossComparison(int threshold, String meaninglessWords) {
+        super(threshold, meaninglessWords);
     }
 
     /**

@@ -1,10 +1,5 @@
 package it.unitn.disi.smatch.matchers.element;
 
-import it.unitn.disi.common.DISIException;
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
-import it.unitn.disi.common.components.ConfigurationKeyMissingException;
-import it.unitn.disi.common.utils.ClassFactory;
 import it.unitn.disi.smatch.SMatchConstants;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.ling.ISense;
@@ -16,12 +11,11 @@ import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.oracles.ILinguisticOracle;
 import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.oracles.SenseMatcherException;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * Performs all element level matching routines and provides the library of element level matchers. Needs the
@@ -46,100 +40,62 @@ import java.util.Properties;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class MatcherLibrary extends Configurable implements IMatcherLibrary {
+public class ElementMatcher implements IElementMatcher {
 
-    private static final Logger log = LoggerFactory.getLogger(MatcherLibrary.class);
+    private static final Logger log = LoggerFactory.getLogger(ElementMatcher.class);
 
-    // sense matcher
-    private static final String SENSE_MATCHER_KEY = "senseMatcher";
-    private ISenseMatcher senseMatcher = null;
-
-    // linguistic oracle
-    private static final String LINGUISTIC_ORACLE_KEY = "linguisticOracle";
-    private ILinguisticOracle linguisticOracle = null;
+    protected final IMappingFactory mappingFactory;
+    private final ISenseMatcher senseMatcher;
+    private final ILinguisticOracle linguisticOracle;
 
     // exploit only WordNet (false) or use element level semantic matchers (true)
-    private static final String USE_WEAK_SEMANTICS_MATCHERS_KEY = "useWeakSemanticsElementLevelMatchersLibrary";
-    private boolean useWeakSemanticsElementLevelMatchersLibrary = true;
+    private final boolean useWeakSemanticsElementLevelMatchersLibrary;
 
     // contains the classes of string matchers (Implementations of IStringBasedElementLevelSemanticMatcher interface)
-    private static final String STRING_MATCHERS_KEY = "stringMatchers";
-    private List<IStringBasedElementLevelSemanticMatcher> stringMatchers = new ArrayList<IStringBasedElementLevelSemanticMatcher>();
+    private final List<IStringBasedElementLevelSemanticMatcher> stringMatchers;
 
     // contains the classes of sense and gloss based matchers (Implementations of ISenseGlossBasedElementLevelSemanticMatcher interface)
-    private static final String SENSE_GLOSS_MATCHERS_KEY = "senseGlossMatchers";
-    private List<ISenseGlossBasedElementLevelSemanticMatcher> senseGlossMatchers = new ArrayList<ISenseGlossBasedElementLevelSemanticMatcher>();
+    private final List<ISenseGlossBasedElementLevelSemanticMatcher> senseGlossMatchers;
 
-    private static final String MAPPING_FACTORY_KEY = "mappingFactory";
-    protected IMappingFactory mappingFactory = null;
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle) {
+        this.mappingFactory = mappingFactory;
+        this.senseMatcher = senseMatcher;
+        this.linguisticOracle = linguisticOracle;
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        Properties oldProperties = new Properties();
-        oldProperties.putAll(properties);
+        useWeakSemanticsElementLevelMatchersLibrary = true;
+        stringMatchers = Collections.emptyList();
+        senseGlossMatchers = Collections.emptyList();
+    }
 
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(SENSE_MATCHER_KEY)) {
-                senseMatcher = (ISenseMatcher) configureComponent(senseMatcher, oldProperties, newProperties, "sense matcher", SENSE_MATCHER_KEY, ISenseMatcher.class);
-            } else {
-                throw new ConfigurationKeyMissingException(SENSE_MATCHER_KEY);
-            }
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
+                          boolean useWeakSemanticsElementLevelMatchersLibrary) {
+        this.mappingFactory = mappingFactory;
+        this.senseMatcher = senseMatcher;
+        this.linguisticOracle = linguisticOracle;
+        this.useWeakSemanticsElementLevelMatchersLibrary = useWeakSemanticsElementLevelMatchersLibrary;
 
-            if (newProperties.containsKey(LINGUISTIC_ORACLE_KEY)) {
-                linguisticOracle = (ILinguisticOracle) configureComponent(linguisticOracle, oldProperties, newProperties, "linguistic oracle", LINGUISTIC_ORACLE_KEY, ILinguisticOracle.class);
-            } else {
-                throw new ConfigurationKeyMissingException(LINGUISTIC_ORACLE_KEY);
-            }
+        stringMatchers = Collections.emptyList();
+        senseGlossMatchers = Collections.emptyList();
+    }
 
-            if (newProperties.containsKey(USE_WEAK_SEMANTICS_MATCHERS_KEY)) {
-                useWeakSemanticsElementLevelMatchersLibrary = Boolean.parseBoolean(newProperties.getProperty(USE_WEAK_SEMANTICS_MATCHERS_KEY));
-            }
-
-            if (newProperties.containsKey(STRING_MATCHERS_KEY)) {
-                stringMatchers.clear();
-                try {
-                    for (Object o : ClassFactory.stringToClasses(newProperties.getProperty(STRING_MATCHERS_KEY), ";")) {
-                        stringMatchers.add((IStringBasedElementLevelSemanticMatcher) o);
-                    }
-                } catch (DISIException e) {
-                    throw new ConfigurableException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-                }
-                // common properties for all of them
-                Properties p = getComponentProperties(STRING_MATCHERS_KEY + ".*.", newProperties);
-                for (IStringBasedElementLevelSemanticMatcher m : stringMatchers) {
-                    // specific properties for each of them
-                    Properties sp = getComponentProperties(STRING_MATCHERS_KEY + "." + m.getClass().getSimpleName() + ".", newProperties);
-                    sp.putAll(p);
-                    m.setProperties(sp);
-                }
-
-            }
-
-            if (newProperties.containsKey(SENSE_GLOSS_MATCHERS_KEY)) {
-                senseGlossMatchers.clear();
-                try {
-                    for (Object o : ClassFactory.stringToClasses(newProperties.getProperty(SENSE_GLOSS_MATCHERS_KEY), ";")) {
-                        senseGlossMatchers.add((ISenseGlossBasedElementLevelSemanticMatcher) o);
-                    }
-                } catch (DISIException e) {
-                    throw new ConfigurableException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-                }
-                Properties p = getComponentProperties(SENSE_GLOSS_MATCHERS_KEY + ".*.", newProperties);
-                for (ISenseGlossBasedElementLevelSemanticMatcher m : senseGlossMatchers) {
-                    Properties sp = getComponentProperties(SENSE_GLOSS_MATCHERS_KEY + "." + m.getClass().getSimpleName() + ".", newProperties);
-                    sp.putAll(p);
-                    m.setProperties(sp);
-                }
-            }
-
-            if (newProperties.containsKey(MAPPING_FACTORY_KEY)) {
-                mappingFactory = (IMappingFactory) configureComponent(mappingFactory, oldProperties, newProperties, "mapping factory", MAPPING_FACTORY_KEY, IMappingFactory.class);
-            } else {
-                throw new ConfigurationKeyMissingException(MAPPING_FACTORY_KEY);
-            }
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
+                          boolean useWeakSemanticsElementLevelMatchersLibrary,
+                          List<IStringBasedElementLevelSemanticMatcher> stringMatchers,
+                          List<ISenseGlossBasedElementLevelSemanticMatcher> senseGlossMatchers) {
+        this.mappingFactory = mappingFactory;
+        this.senseMatcher = senseMatcher;
+        this.linguisticOracle = linguisticOracle;
+        this.useWeakSemanticsElementLevelMatchersLibrary = useWeakSemanticsElementLevelMatchersLibrary;
+        if (null == stringMatchers) {
+            this.stringMatchers = Collections.emptyList();
+        } else {
+            this.stringMatchers = stringMatchers;
         }
-        return result;
+        if (null == senseGlossMatchers) {
+            this.senseGlossMatchers = Collections.emptyList();
+        } else {
+            this.senseGlossMatchers = senseGlossMatchers;
+        }
     }
 
     public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws MatcherLibraryException {

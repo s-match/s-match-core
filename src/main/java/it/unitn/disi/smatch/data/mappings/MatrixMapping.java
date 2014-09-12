@@ -1,8 +1,5 @@
 package it.unitn.disi.smatch.data.mappings;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
-import it.unitn.disi.common.components.ConfigurationKeyMissingException;
 import it.unitn.disi.smatch.data.IIndexedObject;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.matrices.IMatchMatrix;
@@ -20,10 +17,8 @@ import java.util.*;
  */
 public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> implements IContextMapping<T>, IMappingFactory {
 
-    private static final String MATCH_MATRIX_FACTORY_KEY = "matchMatrixFactory";
-    protected IMatchMatrixFactory factory;
+    protected final IMatchMatrixFactory factory;
 
-    protected Properties properties;
     protected IMatchMatrix matrix;
 
     // for set size();
@@ -95,18 +90,10 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
             while (curRow < matrix.getX() && curCol < matrix.getY() && IMappingElement.IDK == (relation = matrix.get(curRow, curCol)));
 
             if (IMappingElement.IDK != relation) {
-                result = new MappingElement<T>(sources[curRow], targets[curCol], relation);
+                result = new MappingElement<>(sources[curRow], targets[curCol], relation);
             }
             return result;
         }
-    }
-
-    public MatrixMapping() {
-        properties = new Properties();
-    }
-
-    public MatrixMapping(Properties properties) {
-        this.properties = properties;
     }
 
     public MatrixMapping(IMatchMatrixFactory factory) {
@@ -142,29 +129,6 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
         // void
     }
 
-    public Properties getProperties() {
-        return properties;
-    }
-
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = !newProperties.equals(properties);
-        if (result) {
-            if (newProperties.containsKey(MATCH_MATRIX_FACTORY_KEY)) {
-                factory = (IMatchMatrixFactory) Configurable.configureComponent(factory, properties, newProperties, "match matrix factory", MATCH_MATRIX_FACTORY_KEY, IMatchMatrixFactory.class);
-            } else {
-                throw new ConfigurationKeyMissingException(MATCH_MATRIX_FACTORY_KEY);
-            }
-
-            properties.clear();
-            properties.putAll(newProperties);
-        }
-        return result;
-    }
-
-    public boolean setProperties(String fileName) throws ConfigurableException {
-        return setProperties(Configurable.loadProperties(fileName));
-    }
-
     public char getRelation(T source, T target) {
         return matrix.get(source.getIndex(), target.getIndex());
     }
@@ -193,11 +157,11 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
     public List<IMappingElement<T>> getSources(final T source) {
         final int sIdx = source.getIndex();
         if (0 <= sIdx && sIdx < sources.length && (source == sources[sIdx])) {
-            ArrayList<IMappingElement<T>> result = new ArrayList<IMappingElement<T>>();
+            ArrayList<IMappingElement<T>> result = new ArrayList<>();
             for (int j = 0; j < targets.length; j++) {
                 char rel = matrix.get(sIdx, j);
                 if (IMappingElement.IDK != rel) {
-                    result.add(new MappingElement<T>(sources[sIdx], targets[j], rel));
+                    result.add(new MappingElement<>(sources[sIdx], targets[j], rel));
                 }
             }
             return result;
@@ -209,11 +173,11 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
     public List<IMappingElement<T>> getTargets(T target) {
         final int tIdx = target.getIndex();
         if (0 <= tIdx && tIdx < targets.length && (target == targets[tIdx])) {
-            ArrayList<IMappingElement<T>> result = new ArrayList<IMappingElement<T>>();
+            ArrayList<IMappingElement<T>> result = new ArrayList<>();
             for (int i = 0; i < sources.length; i++) {
                 char rel = matrix.get(i, tIdx);
                 if (IMappingElement.IDK != rel) {
-                    result.add(new MappingElement<T>(sources[i], targets[tIdx], rel));
+                    result.add(new MappingElement<>(sources[i], targets[tIdx], rel));
                 }
             }
             return result;

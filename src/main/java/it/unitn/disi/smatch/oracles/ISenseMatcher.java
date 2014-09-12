@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.oracles;
 
-import it.unitn.disi.common.components.IConfigurable;
 import it.unitn.disi.smatch.data.ling.ISense;
 
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.List;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public interface ISenseMatcher extends IConfigurable {
+public interface ISenseMatcher {
 
     /**
      * Returns semantic relation holding between two sets of senses.

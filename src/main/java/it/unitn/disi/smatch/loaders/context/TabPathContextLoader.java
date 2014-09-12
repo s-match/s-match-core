@@ -4,6 +4,8 @@ import it.unitn.disi.smatch.data.trees.Context;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.loaders.ILoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,12 +18,14 @@ import java.io.IOException;
  */
 public class TabPathContextLoader extends BaseFileContextLoader<IContext> implements IContextLoader {
 
+    private static final Logger log = LoggerFactory.getLogger(TabPathContextLoader.class);
+
     @Override
     protected IContext process(BufferedReader input) throws IOException {
         IContext result = new Context();
         result.createRoot("Top");
 
-        nodesParsed = 0;
+        int nodesParsed = 0;
         String line;
         while ((line = input.readLine()) != null &&
                 !line.startsWith("#") &&
@@ -37,6 +41,7 @@ public class TabPathContextLoader extends BaseFileContextLoader<IContext> implem
             newRoot.setParent(null);
             result.setRoot(newRoot);
         }
+        log.info("Parsed nodes:\t" + nodesParsed);
         return result;
     }
 

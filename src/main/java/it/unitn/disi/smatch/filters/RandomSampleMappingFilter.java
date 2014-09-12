@@ -1,19 +1,17 @@
 package it.unitn.disi.smatch.filters;
 
 import it.unitn.disi.smatch.SMatchConstants;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.INode;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Properties;
 import java.util.Random;
 
 /**
- * Selects random sample. Accepts sample size parameter as sampleSize.
- * By default samples 100 links.
+ * Selects random sample.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
@@ -21,18 +19,11 @@ public class RandomSampleMappingFilter extends BaseFilter implements IMappingFil
 
     private static final Logger log = LoggerFactory.getLogger(RandomSampleMappingFilter.class);
 
-    private static final String SAMPLE_SIZE_KEY = "sampleSize";
-    private int sampleSize = 100;
+    private final int sampleSize;
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(SAMPLE_SIZE_KEY)) {
-                sampleSize = Integer.parseInt(newProperties.getProperty(SAMPLE_SIZE_KEY));
-            }
-        }
-        return result;
+    public RandomSampleMappingFilter(IMappingFactory mappingFactory, int sampleSize) {
+        super(mappingFactory);
+        this.sampleSize = sampleSize;
     }
 
     public IContextMapping<INode> filter(IContextMapping<INode> mapping) {

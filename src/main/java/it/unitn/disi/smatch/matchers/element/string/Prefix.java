@@ -1,11 +1,7 @@
 package it.unitn.disi.smatch.matchers.element.string;
 
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.IStringBasedElementLevelSemanticMatcher;
-
-import java.util.Arrays;
-import java.util.HashSet;
 
 /**
  * Implements Prefix matcher.
@@ -14,7 +10,7 @@ import java.util.HashSet;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class Prefix extends Configurable implements IStringBasedElementLevelSemanticMatcher {
+public class Prefix implements IStringBasedElementLevelSemanticMatcher {
 
     /**
      * Computes the relation with prefix matcher.

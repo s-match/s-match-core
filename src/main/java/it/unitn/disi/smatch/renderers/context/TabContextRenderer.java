@@ -1,6 +1,7 @@
 package it.unitn.disi.smatch.renderers.context;
 
 import it.unitn.disi.smatch.data.trees.*;
+import it.unitn.disi.smatch.data.util.ProgressContainer;
 import it.unitn.disi.smatch.loaders.ILoader;
 
 import java.io.BufferedWriter;
@@ -16,9 +17,17 @@ import java.util.Iterator;
  */
 public class TabContextRenderer extends BaseFileContextRenderer<IBaseContext<IBaseNode<IBaseNode, IBaseNodeData>>> {
 
+    public TabContextRenderer() {
+        super();
+    }
+
+    public TabContextRenderer(boolean sort) {
+        super(sort);
+    }
+
     @SuppressWarnings({"unchecked"})
-    protected void process(IBaseContext<IBaseNode<IBaseNode, IBaseNodeData>> context, BufferedWriter out) throws IOException, ContextRendererException {
-        ArrayList<IBaseNode<IBaseNode, IBaseNodeData>> nodeQ = new ArrayList<IBaseNode<IBaseNode, IBaseNodeData>>();
+    protected void process(IBaseContext<IBaseNode<IBaseNode, IBaseNodeData>> context, BufferedWriter out, ProgressContainer progressContainer) throws IOException, ContextRendererException {
+        ArrayList<IBaseNode<IBaseNode, IBaseNodeData>> nodeQ = new ArrayList<>();
         String level = "";
         nodeQ.add(context.getRoot());
         IBaseNode<IBaseNode, IBaseNodeData> curNode;
@@ -30,14 +39,14 @@ public class TabContextRenderer extends BaseFileContextRenderer<IBaseContext<IBa
             } else {
                 line = level + curNode.getNodeData().getName() + "\n";
                 out.write(line);
-                reportProgress();
+                progressContainer.progress();
 
                 if (curNode.getChildCount() > 0) {
                     level = level + "\t";
                     nodeQ.add(0, null);
                     Iterator<IBaseNode> children;
                     if (sort) {
-                        ArrayList<IBaseNode> childrenList = new ArrayList<IBaseNode>(curNode.getChildrenList());
+                        ArrayList<IBaseNode> childrenList = new ArrayList<>(curNode.getChildrenList());
                         Collections.sort(childrenList, Node.NODE_NAME_COMPARATOR);
                         children = childrenList.iterator();
                     } else {

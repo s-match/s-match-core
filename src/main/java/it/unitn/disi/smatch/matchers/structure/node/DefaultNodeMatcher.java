@@ -1,9 +1,10 @@
 package it.unitn.disi.smatch.matchers.structure.node;
 
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
-import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.deciders.ISATSolver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +17,10 @@ import java.util.Map;
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
 public class DefaultNodeMatcher extends BaseNodeMatcher implements INodeMatcher {
+
+    public DefaultNodeMatcher(ISATSolver satSolver) {
+        super(satSolver);
+    }
 
     public char nodeMatch(IContextMapping<IAtomicConceptOfLabel> acolMapping,
                           Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
@@ -37,7 +42,7 @@ public class DefaultNodeMatcher extends BaseNodeMatcher implements INodeMatcher 
             boolean isOpposite;
 
             // ACoLs -> its DIMACS variable number
-            HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<IAtomicConceptOfLabel, String>();
+            HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
             // number of variables in SAT problem
             Integer numberOfVariables;
             // number of clauses in SAT problem
@@ -54,7 +59,7 @@ public class DefaultNodeMatcher extends BaseNodeMatcher implements INodeMatcher 
             String contextBInDIMACSFormat = DIMACSfromList(contextB);
 
             // negated formula
-            ArrayList<ArrayList<String>> negatedContext = new ArrayList<ArrayList<String>>();
+            ArrayList<ArrayList<String>> negatedContext = new ArrayList<>();
             // sat problem in DIMACS format
             String satProblemInDIMACS;
             // sat problem with DIMACS header

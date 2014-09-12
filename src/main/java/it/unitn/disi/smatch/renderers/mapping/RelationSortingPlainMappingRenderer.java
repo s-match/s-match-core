@@ -3,8 +3,9 @@ package it.unitn.disi.smatch.renderers.mapping;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.trees.INode;
-import org.slf4j.LoggerFactory;
+import it.unitn.disi.smatch.data.util.MappingProgressContainer;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -19,7 +20,7 @@ public class RelationSortingPlainMappingRenderer extends PlainMappingRenderer {
     private static final Logger log = LoggerFactory.getLogger(RelationSortingPlainMappingRenderer.class);
 
     @Override
-    protected void process(IContextMapping<INode> mapping, BufferedWriter out) throws IOException {
+    protected void process(IContextMapping<INode> mapping, BufferedWriter out, MappingProgressContainer progressContainer) throws IOException {
         char[] relations = {IMappingElement.DISJOINT, IMappingElement.EQUIVALENCE, IMappingElement.LESS_GENERAL, IMappingElement.MORE_GENERAL};
 
         for (char relation : relations) {
@@ -36,34 +37,14 @@ public class RelationSortingPlainMappingRenderer extends PlainMappingRenderer {
                     out.write(sourceConceptName + "\t" + relation + "\t" + targetConceptName + "\n");
                     relationsRendered++;
 
-                    reportProgress();
+                    progressContainer.countRelation(mappingElement.getRelation());
+                    progressContainer.progress();
                 }
-            }
-
-            switch (relation) {
-                case IMappingElement.LESS_GENERAL: {
-                    lg = relationsRendered;
-                    break;
-                }
-                case IMappingElement.MORE_GENERAL: {
-                    mg = relationsRendered;
-                    break;
-                }
-                case IMappingElement.EQUIVALENCE: {
-                    eq = relationsRendered;
-                    break;
-                }
-                case IMappingElement.DISJOINT: {
-                    dj = relationsRendered;
-                    break;
-                }
-                default:
-                    break;
             }
 
             if (0 < relationsRendered) {
                 out.write("\n");// relation separator
             }
-        }// for relation
+        }
     }
 }

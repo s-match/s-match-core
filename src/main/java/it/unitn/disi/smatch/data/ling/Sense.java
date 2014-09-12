@@ -12,7 +12,7 @@ import java.util.List;
  */
 public abstract class Sense implements ISense {
 
-    String id;
+    protected final String id;
 
     public Sense(String id) {
         this.id = id;

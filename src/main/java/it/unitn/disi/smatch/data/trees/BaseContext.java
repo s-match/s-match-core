@@ -67,7 +67,7 @@ public class BaseContext<E extends IBaseNode> implements IBaseContext<E>, IBaseT
             return Collections.unmodifiableList(nodes);
         } else {
             if (hasRoot()) {
-                nodes = new ArrayList<E>();
+                nodes = new ArrayList<>();
                 nodes.add(root);
                 nodes.addAll(root.getDescendantsList());
                 nodes.trimToSize();

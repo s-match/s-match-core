@@ -1,8 +1,7 @@
 package it.unitn.disi.smatch.filters;
 
-import it.unitn.disi.common.components.ConfigurableException;
-import it.unitn.disi.common.components.ConfigurationKeyMissingException;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.loaders.mapping.IMappingLoader;
 import it.unitn.disi.smatch.loaders.mapping.MappingLoaderException;
@@ -10,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
-import java.util.Properties;
 
 /**
  * Computes precision and recall using positive and negative parts of the golden standard. Needs the
@@ -33,37 +31,20 @@ public class PR extends BaseFilter {
 
     private static final Logger log = LoggerFactory.getLogger(PR.class);
 
-    private static final String MAPPING_LOADER_KEY = "mappingLoader";
-    protected IMappingLoader mappingLoader = null;
+    protected final IMappingLoader mappingLoader;
 
-    private static final String MAPPINGS_KEY = "mappings";
-    protected String[] mappingLocations = null;
-    @SuppressWarnings("unchecked")
-    protected IContextMapping<INode>[] filterMappings = (IContextMapping<INode>[]) new IContextMapping[2];
+    protected final String[] mappingLocations;
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        Properties oldProperties = new Properties();
-        oldProperties.putAll(properties);
+    public PR(IMappingFactory mappingFactory, IMappingLoader mappingLoader, String mappingLocation) {
+        super(mappingFactory);
+        this.mappingLoader = mappingLoader;
+        this.mappingLocations = mappingLocation.split(";");
 
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(MAPPING_LOADER_KEY)) {
-                mappingLoader = (IMappingLoader) configureComponent(mappingLoader, oldProperties, newProperties, "mapping loader", MAPPING_LOADER_KEY, IMappingLoader.class);
-            } else {
-                throw new ConfigurationKeyMissingException(MAPPING_LOADER_KEY);
-            }
-
-            if (newProperties.containsKey(MAPPINGS_KEY)) {
-                mappingLocations = newProperties.getProperty(MAPPINGS_KEY).split(";");
-            } else {
-                throw new ConfigurationKeyMissingException(MAPPINGS_KEY);
-            }
-        }
-        return result;
     }
 
+    @SuppressWarnings("unchecked")
     public IContextMapping<INode> filter(IContextMapping<INode> mapping) throws MappingFilterException {
+        IContextMapping<INode>[] filterMappings = (IContextMapping<INode>[]) new IContextMapping[2];
         //load the mapping
         try {
             log.debug("Loading positive mapping...");

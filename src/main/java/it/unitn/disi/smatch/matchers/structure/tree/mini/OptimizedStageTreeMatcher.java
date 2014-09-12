@@ -1,19 +1,18 @@
 package it.unitn.disi.smatch.matchers.structure.tree.mini;
 
-import it.unitn.disi.smatch.SMatchConstants;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.mappings.ReversingMappingElement;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.data.util.ProgressContainer;
 import it.unitn.disi.smatch.matchers.structure.node.OptimizedStageNodeMatcher;
-import it.unitn.disi.smatch.matchers.structure.tree.BaseTreeMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.ITreeMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.TreeMatcherException;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -27,75 +26,54 @@ import java.util.*;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements ITreeMatcher {
+public class OptimizedStageTreeMatcher implements ITreeMatcher {
 
     private static final Logger log = LoggerFactory.getLogger(OptimizedStageTreeMatcher.class);
 
-    protected OptimizedStageNodeMatcher smatchMatcher;
-    protected Map<String, IAtomicConceptOfLabel> sourceAcols;
-    protected Map<String, IAtomicConceptOfLabel> targetAcols;
+    protected final IMappingFactory mappingFactory;
+    protected final OptimizedStageNodeMatcher nodeMatcher;
 
-    protected IContextMapping<IAtomicConceptOfLabel> acolMapping;
-    protected Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols;
-
-    // need another mapping because here we allow < and > between the same pair of nodes
-    protected HashSet<IMappingElement<INode>> mapping;
-
-    protected long counter = 0;
-    protected long total;
-    protected long reportInt;
-
-    protected boolean direction;
-
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (nodeMatcher instanceof OptimizedStageNodeMatcher) {
-                smatchMatcher = (OptimizedStageNodeMatcher) nodeMatcher;
-            } else {
-                throw new TreeMatcherException("OptimizedStageTreeMatcher works only with OptimizedStageNodeMatcher");
-            }
-        }
-        return result;
+    protected OptimizedStageTreeMatcher(OptimizedStageNodeMatcher nodeMatcher, IMappingFactory mappingFactory) {
+        this.nodeMatcher = nodeMatcher;
+        this.mappingFactory = mappingFactory;
     }
 
-    public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext, IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
-        this.acolMapping = acolMapping;
-
-        total = (long) sourceContext.getNodesList().size() * (long) targetContext.getNodesList().size();
-        reportInt = (total / 20) + 1;//i.e. report every 5%
-
+    public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext,
+                                            IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
         for (INode sourceNode : sourceContext.getNodesList()) {
             // this is to distinguish below, in matcher, for axiom creation
             sourceNode.getNodeData().setSource(true);
         }
 
-        sourceAcols = new HashMap<String, IAtomicConceptOfLabel>();
-        targetAcols = new HashMap<String, IAtomicConceptOfLabel>();
+        Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<>();
+        Map<String, IAtomicConceptOfLabel> targetAcols = new HashMap<>();
 
-        mapping = new HashSet<IMappingElement<INode>>();
-        nmtAcols = new HashMap<INode, ArrayList<IAtomicConceptOfLabel>>();
+        // need another mapping because here we allow < and > between the same pair of nodes
+        HashSet<IMappingElement<INode>> mapping = new HashSet<>();
+        Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols = new HashMap<>();
 
+        long sourceNodeCount = (long) sourceContext.getRoot().getDescendantCount() + 1;
+        long targetNodeCount = (long) targetContext.getRoot().getDescendantCount() + 1;
+        ProgressContainer progressContainer = new ProgressContainer(sourceNodeCount * targetNodeCount, log);
         log.info("DJ...");
-        treeDisjoint(sourceContext.getRoot(), targetContext.getRoot());
+        treeDisjoint(sourceContext.getRoot(), targetContext.getRoot(),
+                acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         int dj = mapping.size();
         log.info("Links found DJ: " + dj);
-        counter = 0;
 
+        progressContainer = new ProgressContainer(sourceNodeCount * targetNodeCount, log);
         log.info("LG...");
-        direction = true;
-        treeSubsumedBy(sourceContext.getRoot(), targetContext.getRoot());
+        treeSubsumedBy(sourceContext.getRoot(), targetContext.getRoot(),
+                true, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         int lg = mapping.size() - dj;
         log.info("Links found LG: " + lg);
-        counter = 0;
 
+        progressContainer = new ProgressContainer(sourceNodeCount * targetNodeCount, log);
         log.info("MG...");
-        direction = false;
-        treeSubsumedBy(targetContext.getRoot(), sourceContext.getRoot());
+        treeSubsumedBy(targetContext.getRoot(), sourceContext.getRoot(),
+                false, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         int mg = mapping.size() - dj - lg;
         log.info("Links found MG: " + mg);
-        counter = 0;
 
         log.info("TreeEquiv...");
         IContextMapping<INode> result = treeEquiv(mapping, sourceContext, targetContext);
@@ -104,72 +82,90 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements ITreeM
         return result;
     }
 
-    protected void treeDisjoint(INode n1, INode n2) throws TreeMatcherException {
-        nodeTreeDisjoint(n1, n2);
+    protected void treeDisjoint(INode n1, INode n2,
+                                IContextMapping<IAtomicConceptOfLabel> acolMapping,
+                                Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
+                                Map<String, IAtomicConceptOfLabel> sourceAcols,
+                                Map<String, IAtomicConceptOfLabel> targetAcols,
+                                HashSet<IMappingElement<INode>> mapping,
+                                ProgressContainer progressContainer) throws TreeMatcherException {
+        nodeTreeDisjoint(n1, n2, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         for (INode child : n1.getChildrenList()) {
-            treeDisjoint(child, n2);
+            treeDisjoint(child, n2, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         }
     }
 
-    protected void nodeTreeDisjoint(INode n1, INode n2) throws TreeMatcherException {
-        if (findRelation(n1.getAncestorsList(), n2, IMappingElement.DISJOINT)) {
+    protected void nodeTreeDisjoint(INode n1, INode n2,
+                                    IContextMapping<IAtomicConceptOfLabel> acolMapping,
+                                    Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
+                                    Map<String, IAtomicConceptOfLabel> sourceAcols,
+                                    Map<String, IAtomicConceptOfLabel> targetAcols,
+                                    HashSet<IMappingElement<INode>> mapping,
+                                    ProgressContainer progressContainer) throws TreeMatcherException {
+        if (findRelation(n1.getAncestorsList(), n2, IMappingElement.DISJOINT, mapping)) {
             // we skip n2 subtree, so adjust the counter
-            final long skipTo = counter + n2.getDescendantsList().size();
-            while (counter < skipTo) {
-                progress();
+            final long skipTo = progressContainer.getCounter() + n2.getDescendantCount();
+            while (progressContainer.getCounter() < skipTo) {
+                progressContainer.progress();
             }
 
             return;
         }
 
-        if (smatchMatcher.nodeDisjoint(acolMapping, nmtAcols, sourceAcols, targetAcols, n1, n2)) {
-            addRelation(n1, n2, IMappingElement.DISJOINT);
+        if (nodeMatcher.nodeDisjoint(acolMapping, nmtAcols, sourceAcols, targetAcols, n1, n2)) {
+            addRelation(n1, n2, IMappingElement.DISJOINT, mapping);
             // we skip n2 subtree, so adjust the counter
-            final long skipTo = counter + n2.getDescendantsList().size();
-            while (counter < skipTo) {
-                progress();
+            final long skipTo = progressContainer.getCounter() + n2.getDescendantCount();
+            while (progressContainer.getCounter() < skipTo) {
+                progressContainer.progress();
             }
             return;
         }
 
-        progress();
+        progressContainer.progress();
 
         for (INode child : n2.getChildrenList()) {
-            nodeTreeDisjoint(n1, child);
+            nodeTreeDisjoint(n1, child, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         }
     }
 
-    protected boolean treeSubsumedBy(INode n1, INode n2) throws TreeMatcherException {
-        if (findRelation(n1, n2, IMappingElement.DISJOINT)) {
+    protected boolean treeSubsumedBy(INode n1, INode n2, boolean direction,
+                                     IContextMapping<IAtomicConceptOfLabel> acolMapping,
+                                     Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
+                                     Map<String, IAtomicConceptOfLabel> sourceAcols,
+                                     Map<String, IAtomicConceptOfLabel> targetAcols,
+                                     HashSet<IMappingElement<INode>> mapping,
+                                     ProgressContainer progressContainer) throws TreeMatcherException {
+        if (findRelation(n1, n2, IMappingElement.DISJOINT, mapping)) {
             // we skip n1 subtree, so adjust the counter
-            final long skipTo = counter + n1.getDescendantsList().size();
-            while (counter < skipTo) {
-                progress();
+            final long skipTo = progressContainer.getCounter() + n1.getDescendantCount();
+            while (progressContainer.getCounter() < skipTo) {
+                progressContainer.progress();
             }
 
             return false;
         }
 
-        progress();
-        if (!smatchMatcher.nodeSubsumedBy(acolMapping, nmtAcols, sourceAcols, targetAcols, n1, n2)) {
+        progressContainer.progress();
+        if (!nodeMatcher.nodeSubsumedBy(n1, n2, acolMapping, nmtAcols, sourceAcols, targetAcols)) {
             for (INode child : n1.getChildrenList()) {
-                treeSubsumedBy(child, n2);
+                treeSubsumedBy(child, n2, direction, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
             }
         } else {
             boolean lastNodeFound = false;
             for (INode child : n2.getChildrenList()) {
-                if (treeSubsumedBy(n1, child)) {
+                if (treeSubsumedBy(n1, child, direction, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer)) {
                     lastNodeFound = true;
                 }
             }
             if (!lastNodeFound) {
-                addSubsumptionRelation(n1, n2);
+                addSubsumptionRelation(n1, n2, direction, mapping);
             }
 
             // we skip n1 subtree, so adjust the counter
-            final long skipTo = counter + n1.getDescendantsList().size();
-            while (counter < skipTo) {
-                progress();
+            final long skipTo = progressContainer.getCounter() + n1.getDescendantCount();
+            while (progressContainer.getCounter() < skipTo) {
+                progressContainer.progress();
             }
             return true;
         }
@@ -209,7 +205,7 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements ITreeM
         return result;
     }
 
-    protected void addSubsumptionRelation(INode n1, INode n2) {
+    protected void addSubsumptionRelation(INode n1, INode n2, boolean direction, HashSet<IMappingElement<INode>> mapping) {
         if (direction) {
             mapping.add(createMappingElement(n1, n2, IMappingElement.LESS_GENERAL));
         } else {
@@ -217,28 +213,21 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements ITreeM
         }
     }
 
-    protected void addRelation(INode n1, INode n2, char relation) {
+    protected void addRelation(INode n1, INode n2, char relation, HashSet<IMappingElement<INode>> mapping) {
         mapping.add(createMappingElement(n1, n2, relation));
     }
 
-    protected boolean findRelation(INode sourceNode, INode targetNode, char relation) {
+    protected boolean findRelation(INode sourceNode, INode targetNode, char relation, HashSet<IMappingElement<INode>> mapping) {
         return mapping.contains(createMappingElement(sourceNode, targetNode, relation));
     }
 
-    protected boolean findRelation(List<INode> sourceNodes, INode targetNode, char relation) {
+    protected boolean findRelation(List<INode> sourceNodes, INode targetNode, char relation, HashSet<IMappingElement<INode>> mapping) {
         for (INode sourceNode : sourceNodes) {
             if (mapping.contains(createMappingElement(sourceNode, targetNode, relation))) {
                 return true;
             }
         }
         return false;
-    }
-
-    protected void progress() {
-        counter++;
-        if ((SMatchConstants.LARGE_TASK < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-            log.info(100 * counter / total + "%");
-        }
     }
 
     protected static IMappingElement<INode> createMappingElement(INode source, INode target, char relation) {

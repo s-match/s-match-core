@@ -1,7 +1,5 @@
 package it.unitn.disi.smatch.data.mappings;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
@@ -19,7 +17,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
     protected Properties properties;
 
     // source+target pairs mapped to index of relations
-    private Map<NodePair<T, T>, Integer> entries;
+    private final Map<NodePair<T, T>, Integer> entries;
     // relations for the above pairs
     private StringBuilder relations;
 
@@ -80,7 +78,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
     }
 
     public HashMapping() {
-        entries = new HashMap<NodePair<T, T>, Integer>();
+        entries = new HashMap<>();
         relations = new StringBuilder();
     }
 
@@ -88,26 +86,12 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
         return properties;
     }
 
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = !newProperties.equals(properties);
-        if (result) {
-            properties.clear();
-            properties.putAll(newProperties);
-        }
-
-        return result;
-    }
-
-    public boolean setProperties(String fileName) throws ConfigurableException {
-        return setProperties(Configurable.loadProperties(fileName));
-    }
-
     public IContextMapping<INode> getContextMappingInstance(IContext source, IContext target) {
-        return new HashMapping<INode>(source, target);
+        return new HashMapping<>(source, target);
     }
 
     public IContextMapping<IAtomicConceptOfLabel> getACoLMappingInstance(IContext source, IContext target) {
-        return new HashMapping<IAtomicConceptOfLabel>(source, target);
+        return new HashMapping<>(source, target);
     }
 
     public int size() {
@@ -131,12 +115,12 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
         if (IMappingElement.IDK == e.getRelation()) {
             return false;
         }
-        Integer idx = entries.get(new NodePair<T, T>(e.getSource(), e.getTarget()));
+        Integer idx = entries.get(new NodePair<>(e.getSource(), e.getTarget()));
         return null != idx && 0 <= idx && idx < relations.length() && (e.getRelation() == relations.charAt(idx));
     }
 
     private class Itr implements Iterator<IMappingElement<T>> {
-        private Iterator<NodePair<T, T>> i;
+        private final Iterator<NodePair<T, T>> i;
         private NodePair<T, T> lastPair;
 
         private Itr(Iterator<NodePair<T, T>> i) {
@@ -150,7 +134,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
         public IMappingElement<T> next() {
             NodePair<T, T> np = i.next();
             lastPair = np;
-            return new MappingElement<T>(np.getKey(), np.getValue(), relations.charAt(entries.get(np)));
+            return new MappingElement<>(np.getKey(), np.getValue(), relations.charAt(entries.get(np)));
         }
 
         public void remove() {
@@ -178,7 +162,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
 
         @SuppressWarnings("unchecked")
         IMappingElement<T> e = (IMappingElement<T>) o;
-        NodePair<T, T> np = new NodePair<T, T>(e.getSource(), e.getTarget());
+        NodePair<T, T> np = new NodePair<>(e.getSource(), e.getTarget());
         Integer idx = entries.get(np);
         if (null == idx) {
             return false;
@@ -199,7 +183,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
     }
 
     public char getRelation(T source, T target) {
-        NodePair<T, T> np = new NodePair<T, T>(source, target);
+        NodePair<T, T> np = new NodePair<>(source, target);
         Integer idx = entries.get(np);
         if (null == idx) {
             return IMappingElement.IDK;
@@ -209,7 +193,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
     }
 
     public boolean setRelation(T source, T target, char relation) {
-        NodePair<T, T> np = new NodePair<T, T>(source, target);
+        NodePair<T, T> np = new NodePair<>(source, target);
         Integer idx = entries.get(np);
         if (null == idx) {
             if (IMappingElement.IDK != relation) {
@@ -234,7 +218,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
     }
 
     public List<IMappingElement<T>> getSources(final T source) {
-        ArrayList<IMappingElement<T>> result = new ArrayList<IMappingElement<T>>();
+        List<IMappingElement<T>> result = new ArrayList<>();
         for (IMappingElement<T> me : this) {
             if (source == me.getSource()) {
                 result.add(me);
@@ -245,7 +229,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
     }
 
     public List<IMappingElement<T>> getTargets(T target) {
-        ArrayList<IMappingElement<T>> result = new ArrayList<IMappingElement<T>>();
+        List<IMappingElement<T>> result = new ArrayList<>();
         for (IMappingElement<T> me : this) {
             if (target == me.getTarget()) {
                 result.add(me);

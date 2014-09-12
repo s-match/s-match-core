@@ -1,11 +1,7 @@
 package it.unitn.disi.smatch.matchers.element.string;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.IStringBasedElementLevelSemanticMatcher;
-
-import java.util.Properties;
 
 /**
  * Implements Edit Distance matcher. See Element Level Semantic matchers paper for more details.
@@ -17,26 +13,21 @@ import java.util.Properties;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class EditDistance extends Configurable implements IStringBasedElementLevelSemanticMatcher {
+public class EditDistance implements IStringBasedElementLevelSemanticMatcher {
 
-    private static int MATCH = 0;
-    private static int MISMATCH = 1;
-    private static int GAP = 1; // treating gap = mismatch
+    private final static int MATCH = 0;
+    private final static int MISMATCH = 1;
+    private final static int GAP = 1; // treating gap = mismatch
 
-    private static final String THRESHOLD_KEY = "threshold";
-    private double threshold = 0.9;
+    private final double threshold;
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(THRESHOLD_KEY)) {
-                threshold = Double.parseDouble(newProperties.getProperty(THRESHOLD_KEY));
-            }
-        }
-        return result;
+    public EditDistance() {
+        threshold = 0.9;
     }
 
+    public EditDistance(double threshold) {
+        this.threshold = threshold;
+    }
 
     /**
      * Computes the relation with edit distance matcher.

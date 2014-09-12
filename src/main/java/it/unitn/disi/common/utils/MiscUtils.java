@@ -31,28 +31,13 @@ public class MiscUtils {
         if (log.isDebugEnabled()) {
             log.debug("Writing: " + url);
         }
-        OutputStream os = getOutputStream(url);
-        try {
-            BufferedOutputStream bos = new BufferedOutputStream(os);
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            try {
-                oos.writeObject(object);
-            } catch (IOException e) {
-                throw new DISIException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-            } finally {
-                oos.close();
-                bos.close();
-            }
+
+        try (OutputStream os = getOutputStream(url);
+             BufferedOutputStream bos = new BufferedOutputStream(os);
+             ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(object);
         } catch (IOException e) {
             throw new DISIException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        } finally {
-            if (null != os) {
-                try {
-                    os.close();
-                } catch (IOException e) {
-                    log.error(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-                }
-            }
         }
     }
 
@@ -70,30 +55,13 @@ public class MiscUtils {
             log.debug("Reading: " + url);
         }
         Object result;
-        InputStream is = getInputStream(url);
-        try {
-            BufferedInputStream bis = new BufferedInputStream(is);
-            ObjectInputStream oos = new ObjectInputStream(bis);
-            try {
-                result = oos.readObject();
-            } catch (IOException e) {
-                throw new DISIException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-            } catch (ClassNotFoundException e) {
-                throw new DISIException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-            } finally {
-                oos.close();
-                bis.close();
-            }
-        } catch (IOException e) {
+
+        try (InputStream is = getInputStream(url);
+             BufferedInputStream bis = new BufferedInputStream(is);
+             ObjectInputStream oos = new ObjectInputStream(bis)) {
+            result = oos.readObject();
+        } catch (IOException | ClassNotFoundException e) {
             throw new DISIException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        } finally {
-            if (null != is) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    log.error(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-                }
-            }
         }
         return result;
     }

@@ -1,14 +1,11 @@
 package it.unitn.disi.smatch.matchers.element.gloss;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
 import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
 
 import java.util.List;
-import java.util.Properties;
 import java.util.StringTokenizer;
 
 /**
@@ -23,29 +20,29 @@ import java.util.StringTokenizer;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class WNGloss extends Configurable implements ISenseGlossBasedElementLevelSemanticMatcher {
-
-    private static final String THRESHOLD_KEY = "threshold";
-    private int threshold = 1;
+public class WNGloss implements ISenseGlossBasedElementLevelSemanticMatcher {
 
     // the words which are cut off from the area of discourse
-    private static final String MEANINGLESS_WORDS_KEY = "meaninglessWords";
-    private String meaninglessWords = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
+    public final static String DEFAULT_MEANINGLESS_WORDS = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(THRESHOLD_KEY)) {
-                threshold = Integer.parseInt(newProperties.getProperty(THRESHOLD_KEY));
-            }
+    protected final int threshold;
+    protected final String meaninglessWords;
 
-            if (newProperties.containsKey(MEANINGLESS_WORDS_KEY)) {
-                meaninglessWords = newProperties.getProperty(MEANINGLESS_WORDS_KEY) + " ";
-            }
-        }
-        return result;
+    public WNGloss() {
+        this.threshold = 1;
+        this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
     }
+
+    public WNGloss(int threshold) {
+        this.threshold = threshold;
+        this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
+    }
+
+    public WNGloss(int threshold, String meaninglessWords) {
+        this.threshold = threshold;
+        this.meaninglessWords = meaninglessWords;
+    }
+
 
     /**
      * Computes the relations with WordNet gloss matcher.

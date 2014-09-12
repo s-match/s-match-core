@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch;
 
-import it.unitn.disi.common.components.IConfigurable;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
@@ -14,16 +13,12 @@ import it.unitn.disi.smatch.renderers.context.IBaseContextRenderer;
 import it.unitn.disi.smatch.renderers.mapping.IMappingRenderer;
 
 /**
- * Interface for matching related functionalities.<br>
- * The following code can be used in order to obtain an instance of IMatchManager interface.<br>
- * IMatchManager mm=it.unitn.disi.smatch.MatchManager.getInstance();
- * <p/>
- * An S-Match.properties file contain an example configuration with documented properties names and values.
+ * Interface for matching related functionality.
  *
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public interface IMatchManager extends IConfigurable {
+public interface IMatchManager {
 
     /**
      * Creates a context instance.
@@ -76,7 +71,7 @@ public interface IMatchManager extends IConfigurable {
      *
      * @param ctxSource source context
      * @param ctxTarget target context
-     * @param location a mapping location passed to the mapping loader
+     * @param location  a mapping location passed to the mapping loader
      * @return a mapping
      * @throws SMatchException SMatchException
      */
@@ -92,7 +87,7 @@ public interface IMatchManager extends IConfigurable {
     /**
      * Renders the mapping using a current mapping renderer.
      *
-     * @param mapping    a mapping
+     * @param mapping  a mapping
      * @param location a render destination passed to the mapping renderer
      * @throws SMatchException SMatchException
      */

@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.loaders.context;
 
-import it.unitn.disi.common.components.IConfigurable;
 import it.unitn.disi.smatch.data.trees.IBaseContext;
 import it.unitn.disi.smatch.data.trees.IBaseNode;
 import it.unitn.disi.smatch.loaders.ILoader;
@@ -10,7 +9,7 @@ import it.unitn.disi.smatch.loaders.ILoader;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public interface IBaseContextLoader<E extends IBaseContext<? extends IBaseNode>> extends IConfigurable {
+public interface IBaseContextLoader<E extends IBaseContext<? extends IBaseNode>> {
 
     /**
      * Loads the context from a file or database.

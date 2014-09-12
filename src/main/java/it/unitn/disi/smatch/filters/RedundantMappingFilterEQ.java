@@ -2,6 +2,7 @@ package it.unitn.disi.smatch.filters;
 
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.INode;
 
 /**
@@ -18,6 +19,10 @@ import it.unitn.disi.smatch.data.trees.INode;
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
 public class RedundantMappingFilterEQ extends RedundantMappingFilter {
+
+    public RedundantMappingFilterEQ(IMappingFactory mappingFactory) {
+        super(mappingFactory);
+    }
 
     // because in filtering we do not "discover" links
     // we need to check ancestors and descendants, and not only parents and children

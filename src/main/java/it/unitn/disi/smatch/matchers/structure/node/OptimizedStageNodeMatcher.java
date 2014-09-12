@@ -3,6 +3,7 @@ package it.unitn.disi.smatch.matchers.structure.node;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.deciders.ISATSolver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +15,11 @@ import java.util.Map;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeMatcher {
+public class OptimizedStageNodeMatcher extends BaseNodeMatcher {
+
+    public OptimizedStageNodeMatcher(ISATSolver satSolver) {
+        super(satSolver);
+    }
 
     /**
      * Checks whether source node and target node are disjoint.
@@ -41,7 +46,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
         if (null != sourceCNodeFormula && null != targetCNodeFormula && !sourceCNodeFormula.isEmpty() && !targetCNodeFormula.isEmpty() &&
                 null != sourceCLabFormula && null != targetCLabFormula && !sourceCLabFormula.isEmpty() && !targetCLabFormula.isEmpty()
                 ) {
-            HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<IAtomicConceptOfLabel, String>();
+            HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
             Object[] obj = mkAxioms(hashConceptNumber, nmtAcols, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
             String axioms = (String) obj[0];
             int num_of_axiom_clauses = (Integer) obj[1];
@@ -64,19 +69,20 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
     /**
      * Checks whether the source node is subsumed by the target node.
      *
+     * @param sourceNode  interface of source node
+     * @param targetNode  interface of target node
      * @param acolMapping mapping between acols
      * @param nmtAcols    node -> list of node matching task acols
      * @param sourceACoLs mapping acol id -> acol object
      * @param targetACoLs mapping acol id -> acol object
-     * @param sourceNode  interface of source node
-     * @param targetNode  interface of target node
      * @return true if the nodes are in subsumption relation
      * @throws NodeMatcherException NodeMatcherException
      */
-    public boolean nodeSubsumedBy(IContextMapping<IAtomicConceptOfLabel> acolMapping,
+    public boolean nodeSubsumedBy(INode sourceNode, INode targetNode,
+                                  IContextMapping<IAtomicConceptOfLabel> acolMapping,
                                   Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
-                                  Map<String, IAtomicConceptOfLabel> sourceACoLs, Map<String, IAtomicConceptOfLabel> targetACoLs,
-                                  INode sourceNode, INode targetNode) throws NodeMatcherException {
+                                  Map<String, IAtomicConceptOfLabel> sourceACoLs,
+                                  Map<String, IAtomicConceptOfLabel> targetACoLs) throws NodeMatcherException {
         boolean result = false;
         String sourceCNodeFormula = sourceNode.getNodeData().getcNodeFormula();
         String targetCNodeFormula = targetNode.getNodeData().getcNodeFormula();
@@ -87,7 +93,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
                 null != sourceCLabFormula && null != targetCLabFormula && !sourceCLabFormula.isEmpty() && !targetCLabFormula.isEmpty()
                 ) {
             if (sourceNode.getNodeData().getSource()) {
-                HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<IAtomicConceptOfLabel, String>();
+                HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
                 Object[] obj = mkAxioms(hashConceptNumber, nmtAcols, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
                 String axioms = (String) obj[0];
                 int num_of_axiom_clauses = (Integer) obj[1];
@@ -96,7 +102,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
                 ArrayList<ArrayList<String>> contextB = parseFormula(hashConceptNumber, targetACoLs, targetNode);
                 String contextAInDIMACSFormat = DIMACSfromList(contextA);
 
-                ArrayList<ArrayList<String>> negatedContext = new ArrayList<ArrayList<String>>();
+                ArrayList<ArrayList<String>> negatedContext = new ArrayList<>();
                 //LG test
                 Integer numberOfVariables = negateFormulaInList(hashConceptNumber, contextB, negatedContext);
                 String satProblemInDIMACS = axioms + contextAInDIMACSFormat + DIMACSfromList(negatedContext);
@@ -106,7 +112,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
                 result = isUnsatisfiable(DIMACSproblem);
             } else {
                 //swap source, target and relation
-                HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<IAtomicConceptOfLabel, String>();
+                HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
                 Object[] obj = mkAxioms(hashConceptNumber, nmtAcols, targetACoLs, sourceACoLs, acolMapping, targetNode, sourceNode);
                 String axioms = (String) obj[0];
                 int num_of_axiom_clauses = (Integer) obj[1];
@@ -115,7 +121,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
                 ArrayList<ArrayList<String>> contextB = parseFormula(hashConceptNumber, targetACoLs, sourceNode);
                 String contextBInDIMACSFormat = DIMACSfromList(contextB);
 
-                ArrayList<ArrayList<String>> negatedContext = new ArrayList<ArrayList<String>>();
+                ArrayList<ArrayList<String>> negatedContext = new ArrayList<>();
                 //MG test
                 Integer numberOfVariables = negateFormulaInList(hashConceptNumber, contextA, negatedContext);
                 String satProblemInDIMACS = axioms + contextBInDIMACSFormat + DIMACSfromList(negatedContext);
@@ -126,15 +132,5 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
             }
         }
         return result;
-    }
-
-    // stub to allow it to be created as node matcher.
-
-    public char nodeMatch(IContextMapping<IAtomicConceptOfLabel> acolMapping,
-                          Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
-                          Map<String, IAtomicConceptOfLabel> sourceACoLs,
-                          Map<String, IAtomicConceptOfLabel> targetACoLs,
-                          INode sourceNode, INode targetNode) throws NodeMatcherException {
-        throw new NodeMatcherException("Unsupported operation");
     }
 }

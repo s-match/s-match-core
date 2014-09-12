@@ -3,21 +3,37 @@ package it.unitn.disi.smatch.matchers.element;
 import it.unitn.disi.smatch.SMatchConstants;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.oracles.ILinguisticOracle;
+import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Version with an iterator.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class MatcherLibraryIt extends MatcherLibrary {
+public class ElementMatcherIt extends ElementMatcher {
 
-    private static final Logger log = LoggerFactory.getLogger(MatcherLibraryIt.class);
+    private static final Logger log = LoggerFactory.getLogger(ElementMatcherIt.class);
+
+    public ElementMatcherIt(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle) {
+        super(mappingFactory, senseMatcher, linguisticOracle);
+    }
+
+    public ElementMatcherIt(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle, boolean useWeakSemanticsElementLevelMatchersLibrary) {
+        super(mappingFactory, senseMatcher, linguisticOracle, useWeakSemanticsElementLevelMatchersLibrary);
+    }
+
+    public ElementMatcherIt(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle, boolean useWeakSemanticsElementLevelMatchersLibrary, List<IStringBasedElementLevelSemanticMatcher> stringMatchers, List<ISenseGlossBasedElementLevelSemanticMatcher> senseGlossMatchers) {
+        super(mappingFactory, senseMatcher, linguisticOracle, useWeakSemanticsElementLevelMatchersLibrary, stringMatchers, senseGlossMatchers);
+    }
 
     @Override
     public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws MatcherLibraryException {

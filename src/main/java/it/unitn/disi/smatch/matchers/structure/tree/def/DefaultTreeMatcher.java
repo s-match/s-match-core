@@ -3,8 +3,10 @@ package it.unitn.disi.smatch.matchers.structure.tree.def;
 import it.unitn.disi.smatch.SMatchConstants;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.matchers.structure.node.INodeMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.BaseTreeMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.ITreeMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.TreeMatcherException;
@@ -25,6 +27,10 @@ public class DefaultTreeMatcher extends BaseTreeMatcher implements ITreeMatcher 
 
     private static final Logger log = LoggerFactory.getLogger(DefaultTreeMatcher.class);
 
+    public DefaultTreeMatcher(INodeMatcher nodeMatcher, IMappingFactory mappingFactory) {
+        super(nodeMatcher, mappingFactory);
+    }
+
     public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext, IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
         IContextMapping<INode> mapping = mappingFactory.getContextMappingInstance(sourceContext, targetContext);
 
@@ -35,10 +41,10 @@ public class DefaultTreeMatcher extends BaseTreeMatcher implements ITreeMatcher 
         long total = (long) sourceContext.getNodesList().size() * (long) targetContext.getNodesList().size();
         long reportInt = (total / 20) + 1;//i.e. report every 5%
 
-        Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<String, IAtomicConceptOfLabel>();
-        Map<String, IAtomicConceptOfLabel> targetAcols = new HashMap<String, IAtomicConceptOfLabel>();
+        Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<>();
+        Map<String, IAtomicConceptOfLabel> targetAcols = new HashMap<>();
 
-        Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols = new HashMap<INode, ArrayList<IAtomicConceptOfLabel>>();
+        Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols = new HashMap<>();
 
         for (INode sourceNode : sourceContext.getNodesList()) {
             for (INode targetNode : targetContext.getNodesList()) {

@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.matchers.element.gloss;
 
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
@@ -16,7 +15,7 @@ import java.util.List;
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
 
-public class WNLemma extends Configurable implements ISenseGlossBasedElementLevelSemanticMatcher {
+public class WNLemma implements ISenseGlossBasedElementLevelSemanticMatcher {
 
     /**
      * Computes the relation with WordNet lemma matcher.

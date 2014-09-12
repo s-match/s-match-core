@@ -1,8 +1,5 @@
 package it.unitn.disi.smatch.preprocessors;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
-import it.unitn.disi.common.components.ConfigurationKeyMissingException;
 import it.unitn.disi.smatch.SMatchConstants;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.ling.ISense;
@@ -12,8 +9,8 @@ import it.unitn.disi.smatch.oracles.ILinguisticOracle;
 import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.oracles.LinguisticOracleException;
 import it.unitn.disi.smatch.oracles.SenseMatcherException;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -21,104 +18,92 @@ import java.util.*;
  * Performs all the operations related to linguistic preprocessing.
  * It also contains some heuristics to perform sense disambiguation.
  * Corresponds to Step 1 and 2 in the semantic matching algorithm.
- * <p/>
- * Needs and accepts several configuration parameters. See source file for more information.
  *
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  * @author Moaz Reyad <reyad@disi.unitn.it>
  */
-public class DefaultContextPreprocessor extends Configurable implements IContextPreprocessor {
+public class DefaultContextPreprocessor implements IContextPreprocessor {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultContextPreprocessor.class);
 
-    // sense matcher
-    private static final String SENSE_MATCHER_KEY = "senseMatcher";
-    private ISenseMatcher senseMatcher = null;
+    /**
+     * the words which are cut off from the area of discourse
+     */
+    public static final String DEFAULT_MEANINGLESS_WORDS = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
+    /**
+     * the words which are treated as logical and (&)
+     */
+    public static final String DEFAULT_AND_WORDS = " + & ^ ";
+    /**
+     * the words which are treated as logical or (|)
+     */
+    public static final String DEFAULT_OR_WORDS = " and or | , ";
+    /**
+     * the words which are treated as logical not (~)
+     */
+    public static final String DEFAULT_NOT_WORDS = " except non without ";
+    /**
+     * number characters
+     */
+    public static final String DEFAULT_NUMBER_CHARACTERS = "1234567890";
 
-    // linguistic oracle
-    private static final String LINGUISTIC_ORACLE_KEY = "linguisticOracle";
-    private ILinguisticOracle linguisticOracle = null;
+    private final ISenseMatcher senseMatcher;
+    private final ILinguisticOracle linguisticOracle;
 
-    private HashSet<String> unrecognizedWords = new HashSet<String>();
+    private final boolean debugLabels;
+    private final boolean debugUnrecognizedWords;
 
-    // flag to output the label being translated in logs
-    private final static String DEBUG_LABELS_KEY = "debugLabels";
-    private boolean debugLabels = false;
+    private final String meaninglessWords;
+    private final String andWords;
+    private final String orWords;
+    private final String notWords;
+    private final String numberCharacters;
 
-    // flag to output the unrecognized words in logs
-    private final static String DEBUG_UNRECOGNIZED_WORDS_KEY = "debugUnrecognizedWords";
-    private boolean debugUnrecognizedWords = false;
+    public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle) {
+        this.senseMatcher = senseMatcher;
+        this.linguisticOracle = linguisticOracle;
 
-    // the words which are cut off from the area of discourse
-    private static final String MEANINGLESS_WORDS_KEY = "meaninglessWords";
-    private String meaninglessWords = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
+        this.debugLabels = false;
+        this.debugUnrecognizedWords = false;
 
-    // the words which are treated as logical and (&)
-    private static final String AND_WORDS_KEY = "andWords";
-    private String andWords = " + & ^ ";
+        this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
+        this.andWords = DEFAULT_AND_WORDS;
+        this.orWords = DEFAULT_OR_WORDS;
+        this.notWords = DEFAULT_NOT_WORDS;
+        this.numberCharacters = DEFAULT_NUMBER_CHARACTERS;
+    }
 
-    // the words which are treated as logical or (|)
-    private static final String OR_WORDS_KEY = "orWords";
-    private String orWords = " and or | , ";
+    public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
+                                      boolean debugLabels, boolean debugUnrecognizedWords) {
+        this.senseMatcher = senseMatcher;
+        this.linguisticOracle = linguisticOracle;
 
-    // the words which are treated as logical not (~)
-    private static final String NOT_WORDS_KEY = "notWords";
-    private String notWords = " except non without ";
+        this.debugLabels = debugLabels;
+        this.debugUnrecognizedWords = debugUnrecognizedWords;
 
-    // Number characters for linguistic preprocessing.
-    private static final String NUMBER_CHARACTERS_KEY = "numberCharacters";
-    private String numberCharacters = "1234567890";
+        this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
+        this.andWords = DEFAULT_AND_WORDS;
+        this.orWords = DEFAULT_OR_WORDS;
+        this.notWords = DEFAULT_NOT_WORDS;
+        this.numberCharacters = DEFAULT_NUMBER_CHARACTERS;
+    }
 
+    public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
+                                      boolean debugLabels, boolean debugUnrecognizedWords,
+                                      String meaninglessWords, String andWords,
+                                      String orWords, String notWords, String numberCharacters) {
+        this.senseMatcher = senseMatcher;
+        this.linguisticOracle = linguisticOracle;
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        Properties oldProperties = new Properties();
-        oldProperties.putAll(properties);
+        this.debugLabels = debugLabels;
+        this.debugUnrecognizedWords = debugUnrecognizedWords;
 
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(SENSE_MATCHER_KEY)) {
-                senseMatcher = (ISenseMatcher) configureComponent(senseMatcher, oldProperties, newProperties, "sense matcher", SENSE_MATCHER_KEY, ISenseMatcher.class);
-            } else {
-                throw new ConfigurationKeyMissingException(SENSE_MATCHER_KEY);
-            }
-
-            if (newProperties.containsKey(LINGUISTIC_ORACLE_KEY)) {
-                linguisticOracle = (ILinguisticOracle) configureComponent(linguisticOracle, oldProperties, newProperties, "linguistic oracle", LINGUISTIC_ORACLE_KEY, ILinguisticOracle.class);
-            } else {
-                throw new ConfigurationKeyMissingException(LINGUISTIC_ORACLE_KEY);
-            }
-
-            if (newProperties.containsKey(DEBUG_LABELS_KEY)) {
-                debugLabels = Boolean.parseBoolean(newProperties.getProperty(DEBUG_LABELS_KEY));
-            }
-
-            if (newProperties.containsKey(DEBUG_UNRECOGNIZED_WORDS_KEY)) {
-                debugUnrecognizedWords = Boolean.parseBoolean(newProperties.getProperty(DEBUG_UNRECOGNIZED_WORDS_KEY));
-            }
-
-            if (newProperties.containsKey(MEANINGLESS_WORDS_KEY)) {
-                meaninglessWords = newProperties.getProperty(MEANINGLESS_WORDS_KEY) + " ";
-            }
-
-            if (newProperties.containsKey(AND_WORDS_KEY)) {
-                andWords = newProperties.getProperty(AND_WORDS_KEY) + " ";
-            }
-
-            if (newProperties.containsKey(OR_WORDS_KEY)) {
-                orWords = newProperties.getProperty(OR_WORDS_KEY) + " ";
-            }
-
-            if (newProperties.containsKey(NOT_WORDS_KEY)) {
-                notWords = newProperties.getProperty(NOT_WORDS_KEY) + " ";
-            }
-
-            if (newProperties.containsKey(NUMBER_CHARACTERS_KEY)) {
-                numberCharacters = newProperties.getProperty(NUMBER_CHARACTERS_KEY);
-            }
-        }
-        return result;
+        this.meaninglessWords = meaninglessWords;
+        this.andWords = andWords;
+        this.orWords = orWords;
+        this.notWords = notWords;
+        this.numberCharacters = numberCharacters;
     }
 
     /**
@@ -130,9 +115,10 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
     public void preprocess(IContext context) throws ContextPreprocessorException {
-        unrecognizedWords.clear();
+        Set<String> unrecognizedWords = new HashSet<>();
+
         // construct cLabs
-        context = buildCLabs(context);
+        context = buildCLabs(context, unrecognizedWords);
         // sense filtering
         context = findMultiwordsInContextStructure(context);
         try {
@@ -143,7 +129,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
 
         log.debug("Unrecognized words: " + unrecognizedWords.size());
         if (debugUnrecognizedWords) {
-            TreeSet<String> sortedWords = new TreeSet<String>(unrecognizedWords);
+            Set<String> sortedWords = new TreeSet<>(unrecognizedWords);
             for (String unrecognizedWord : sortedWords) {
                 log.debug("Unrecognized word: " + unrecognizedWord);
             }
@@ -154,17 +140,18 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
     /**
      * Constructs cLabs for all nodes of the context.
      *
-     * @param context context of node which cLab to be build
+     * @param context           context of node which cLab to be build
+     * @param unrecognizedWords unrecognized words
      * @return context with cLabs
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
-    private IContext buildCLabs(IContext context) throws ContextPreprocessorException {
+    private IContext buildCLabs(IContext context, Set<String> unrecognizedWords) throws ContextPreprocessorException {
         int counter = 0;
         int total = context.getRoot().getDescendantCount() + 1;
         int reportInt = (total / 20) + 1;//i.e. report every 5%
 
         for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
-            processNode(i.next());
+            processNode(i.next(), unrecognizedWords);
 
             counter++;
             if ((SMatchConstants.LARGE_TREE < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
@@ -178,10 +165,11 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
     /**
      * Creates concept of a label formula.
      *
-     * @param node node to process
+     * @param node              node to process
+     * @param unrecognizedWords unrecognized words
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
-    public void processNode(INode node) throws ContextPreprocessorException {
+    public void processNode(INode node, Set<String> unrecognizedWords) throws ContextPreprocessorException {
         try {
             // reset old preprocessing
             node.getNodeData().setcLabFormula("");
@@ -199,7 +187,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
 
             labelOfNode = replacePunctuation(labelOfNode);
             labelOfNode = labelOfNode.toLowerCase();
-            List<ISense> wnSense = new ArrayList<ISense>();
+            List<ISense> wnSense = new ArrayList<>();
             if (!(("top".equals(labelOfNode) || "thing".equals(labelOfNode)) && !node.hasParent()) && (!meaninglessWords.contains(labelOfNode + " ")) && (isTokenMeaningful(labelOfNode))) {
                 wnSense = linguisticOracle.getSenses(labelOfNode);
             }
@@ -207,7 +195,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
             // identifiers of meaningful tokens in
             String meaningfulTokens = " ";
             // tokens of the label of node
-            List<String> tokensOfNodeLabel = new ArrayList<String>();
+            List<String> tokensOfNodeLabel = new ArrayList<>();
 
             // is the label a WordNet entry?
             int id_tok = 0;
@@ -234,7 +222,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
                 // The label of node is not in WN
                 // Split the label by words
                 StringTokenizer lemmaTokenizer = new StringTokenizer(labelOfNode, " _()[]/'\\#1234567890");
-                ArrayList<String> tokens = new ArrayList<String>();
+                ArrayList<String> tokens = new ArrayList<>();
                 while (lemmaTokenizer.hasMoreElements()) {
                     tokens.add(lemmaTokenizer.nextToken());
                 }
@@ -255,7 +243,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
                             if (!(("top".equals(token) || "thing".equals(token)) && !node.hasParent())) {
                                 wnSense = linguisticOracle.getSenses(token);
                             } else {
-                                wnSense = new ArrayList<ISense>();
+                                wnSense = new ArrayList<>();
                             }
                             if (0 == wnSense.size()) {
                                 List<String> newTokens = complexWordsRecognition(token);
@@ -342,9 +330,9 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
     private List<String> complexWordsRecognition(String token) throws ContextPreprocessorException {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         try {
-            List<ISense> senses = new ArrayList<ISense>();
+            List<ISense> senses = new ArrayList<>();
             int i = 0;
             String start = null;
             String end = null;
@@ -404,7 +392,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
         // label of node
         String token;
         // List of ACoLs identifiers
-        List<String> vec = new ArrayList<String>();
+        List<String> vec = new ArrayList<>();
         // formula for the complex concept
         StringBuilder formulaOfConcept = new StringBuilder();
         // logical connective
@@ -434,7 +422,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
                     insert = true;
                     connective = "";
                     bracket = "";
-                    vec = new ArrayList<String>();
+                    vec = new ArrayList<>();
                     leftBrackets = 0;
                 }
                 // If bracket
@@ -455,7 +443,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
             } else if (notWords.contains(" " + token + " ")) {
                 if (vec != null && vec.size() > 0) {
                     formulaOfConcept.append(connective).append(encloseWithParentheses(vec));
-                    vec = new ArrayList<String>();
+                    vec = new ArrayList<>();
                     connective = "";
                 }
                 // What to add
@@ -467,7 +455,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
             } else {
                 if (meaningfulTokens.contains(" " + i + " ")) {
                     // fill list with ACoL ids
-                    vec.add((node.getNodeData().getId() + "." + i));
+                    vec.add((node.getNodeData().getId() + "_" + i));
                 }
             }
         }
@@ -556,15 +544,15 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
 
     private List<ISense> checkMW(String source, String target) throws ContextPreprocessorException {
         try {
-            ArrayList<ArrayList<String>> mwEnds = linguisticOracle.getMultiwords(source);
+            List<List<String>> mwEnds = linguisticOracle.getMultiwords(source);
             if (mwEnds != null) {
-                for (ArrayList<String> strings : mwEnds) {
+                for (List<String> strings : mwEnds) {
                     if (extendedIndexOf(strings, target, 0) > 0) {
                         return linguisticOracle.getSenses(source + " " + target);
                     }
                 }
             }
-            return new ArrayList<ISense>();
+            return new ArrayList<>();
         } catch (LinguisticOracleException e) {
             throw new ContextPreprocessorException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
@@ -620,7 +608,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
      * @throws SenseMatcherException SenseMatcherException
      */
     private void senseFiltering(IContext context) throws SenseMatcherException {
-        HashMap<IAtomicConceptOfLabel, List<ISense>> refinedSenses = new HashMap<IAtomicConceptOfLabel, List<ISense>>();
+        HashMap<IAtomicConceptOfLabel, List<ISense>> refinedSenses = new HashMap<>();
 
         for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
             INode sourceNode = i.next();
@@ -688,7 +676,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
     private void addToRefinedSenses(HashMap<IAtomicConceptOfLabel, List<ISense>> refinedSenses, IAtomicConceptOfLabel acol, ISense sense) {
         List<ISense> senses = refinedSenses.get(acol);
         if (null == senses) {
-            senses = new ArrayList<ISense>();
+            senses = new ArrayList<>();
         }
         senses.add(sense);
         refinedSenses.put(acol, senses);
@@ -777,19 +765,19 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
      */
     private ArrayList<String> multiwordRecognition(ArrayList<String> tokens) throws ContextPreprocessorException {
         String subLemma;
-        HashMap<String, ArrayList<Integer>> is_token_in_multiword = new HashMap<String, ArrayList<Integer>>();
+        Map<String, List<Integer>> is_token_in_multiword = new HashMap<>();
         for (int i = 0; i < tokens.size(); i++) {
             subLemma = tokens.get(i);
             if ((!andWords.contains(subLemma)) || (!orWords.contains(subLemma))) {
                 // if there a multiword starting with a sublemma
-                ArrayList<ArrayList<String>> entries;
+                List<List<String>> entries;
                 try {
                     entries = linguisticOracle.getMultiwords(subLemma);
                 } catch (LinguisticOracleException e) {
                     throw new ContextPreprocessorException(e.getMessage(), e);
                 }
                 if (null != entries) {
-                    for (ArrayList<String> mweTail : entries) {
+                    for (List<String> mweTail : entries) {
                         boolean flag = false;
                         int co = 0;
                         // at the end co is needed to move pointer for the cases like
@@ -799,7 +787,7 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
                             co++;
                         }
                         if ((co > mweTail.size() - 1) && (flag)) {
-                            ArrayList<Integer> positions = new ArrayList<Integer>();
+                            ArrayList<Integer> positions = new ArrayList<>();
                             int word_pos = tokens.indexOf(subLemma);
                             if (word_pos == -1) {
                                 break;
@@ -850,12 +838,12 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
                                         for (Integer integer : positions) {
                                             int pos = integer - removed_tokens_index_correction;
                                             if (is_token_in_multiword.get(tokens.get(pos)) == null) {
-                                                ArrayList<Integer> toAdd = new ArrayList<Integer>();
+                                                ArrayList<Integer> toAdd = new ArrayList<>();
                                                 toAdd.add(1);
                                                 toAdd.add(word_distance - 1);
                                                 is_token_in_multiword.put(tokens.get(pos), toAdd);
                                             } else {
-                                                ArrayList<Integer> toAdd = is_token_in_multiword.get(tokens.get(pos));
+                                                List<Integer> toAdd = is_token_in_multiword.get(tokens.get(pos));
                                                 int tmp = toAdd.get(0) + 1;
                                                 toAdd.remove(0);
                                                 toAdd.add(0, tmp);
@@ -874,12 +862,12 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
                 }
             }
         }
-        ArrayList<String> tmp = new ArrayList<String>();
+        ArrayList<String> tmp = new ArrayList<>();
         for (String s : tokens) {
             if (is_token_in_multiword.get(s) == null) {
                 tmp.add(s);
             } else {
-                ArrayList<Integer> toAdd = is_token_in_multiword.get(s);
+                List<Integer> toAdd = is_token_in_multiword.get(s);
                 int dist_wo_ands_ors = toAdd.get(0);
                 int multiword_participation = toAdd.get(1);
                 if (dist_wo_ands_ors != multiword_participation) {
@@ -893,8 +881,8 @@ public class DefaultContextPreprocessor extends Configurable implements IContext
     /**
      * Encloses list elements with parenthesis in such a way that operation is always binary.
      * This is a workaround for AIMA limitation.
-     *
-     * [n1.0] becomes [n1.0] 
+     * <p/>
+     * [n1.0] becomes [n1.0]
      * [n1.0, n2.0] becomes [n1.0, n2.0]
      * [n1.0, n2.0, n3.0] becomes [[n1.0], [n2.0, n3.0]]
      * [n1.0, n2.0, n3.0, n4.0] becomes [[n1.0, n2.0], [n3.0, n4.0]]

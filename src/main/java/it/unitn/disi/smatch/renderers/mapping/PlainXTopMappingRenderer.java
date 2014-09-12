@@ -3,8 +3,7 @@ package it.unitn.disi.smatch.renderers.mapping;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.trees.INode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import it.unitn.disi.smatch.data.util.MappingProgressContainer;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -16,10 +15,8 @@ import java.io.IOException;
  */
 public class PlainXTopMappingRenderer extends PlainMappingRenderer {
 
-    private static final Logger log = LoggerFactory.getLogger(PlainXTopMappingRenderer.class);
-
     @Override
-    protected void process(IContextMapping<INode> mapping, BufferedWriter out) throws IOException {
+    protected void process(IContextMapping<INode> mapping, BufferedWriter out, MappingProgressContainer progressContainer) throws IOException {
         for (IMappingElement<INode> mappingElement : mapping) {
             if (mappingElement.getSource().hasParent() && mappingElement.getTarget().hasParent()) {
                 String sourceConceptName = getNodePathToRoot(mappingElement.getSource());
@@ -28,8 +25,8 @@ public class PlainXTopMappingRenderer extends PlainMappingRenderer {
 
                 out.write(sourceConceptName + "\t" + relation + "\t" + targetConceptName + "\n");
 
-                countRelation(relation);
-                reportProgress();
+                progressContainer.countRelation(relation);
+                progressContainer.progress();
             }
         }
     }

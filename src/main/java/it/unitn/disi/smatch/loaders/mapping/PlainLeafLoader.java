@@ -1,24 +1,26 @@
 package it.unitn.disi.smatch.loaders.mapping;
 
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.loaders.ILoader;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 
 /**
  * Loads the mapping consisting of only leaf nodes. Sometimes happens in thesauri.
- * <p/>
- * Needs mappingFactory configuration parameter, which should point to an instance of a class implementing
- * {@link it.unitn.disi.smatch.data.mappings.IMappingFactory} interface.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
 public class PlainLeafLoader extends PlainMappingLoader {
 
     private static final Logger log = LoggerFactory.getLogger(PlainLeafLoader.class);
+
+    protected PlainLeafLoader(IMappingFactory mappingFactory) {
+        super(mappingFactory);
+    }
 
     /**
      * Creates hash map for nodes which contains path from root to node for each node.
@@ -27,7 +29,7 @@ public class PlainLeafLoader extends PlainMappingLoader {
      * @return a hash table which contains path from root to node for each node
      */
     protected HashMap<String, INode> createHash(IContext context) {
-        HashMap<String, INode> result = new HashMap<String, INode>();
+        HashMap<String, INode> result = new HashMap<>();
 
         int nodeCount = 0;
         for (INode node : context.getNodesList()) {

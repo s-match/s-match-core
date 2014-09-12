@@ -3,16 +3,16 @@ package it.unitn.disi.smatch.matchers.structure.tree.mini;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.data.util.ProgressContainer;
+import it.unitn.disi.smatch.matchers.structure.node.OptimizedStageNodeMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.TreeMatcherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Version with an iterator.
@@ -23,44 +23,48 @@ public class OptimizedStageTreeMatcherIt extends OptimizedStageTreeMatcher {
 
     private static final Logger log = LoggerFactory.getLogger(OptimizedStageTreeMatcherIt.class);
 
+    public OptimizedStageTreeMatcherIt(OptimizedStageNodeMatcher nodeMatcher, IMappingFactory mappingFactory) {
+        super(nodeMatcher, mappingFactory);
+    }
+
     @Override
-    public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext, IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
-        this.acolMapping = acolMapping;
-
-        total = (long) (sourceContext.getRoot().getDescendantCount() + 1) * (long) (targetContext.getRoot().getDescendantCount() + 1);
-        reportInt = (total / 20) + 1;//i.e. report every 5%
-
+    public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext,
+                                            IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
         for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
             INode sourceNode = i.next();
             // this is to distinguish below, in matcher, for axiom creation
             sourceNode.getNodeData().setSource(true);
         }
 
-        sourceAcols = new HashMap<String, IAtomicConceptOfLabel>();
-        targetAcols = new HashMap<String, IAtomicConceptOfLabel>();
+        Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<>();
+        Map<String, IAtomicConceptOfLabel> targetAcols = new HashMap<>();
 
-        mapping = new HashSet<IMappingElement<INode>>();
-        nmtAcols = new HashMap<INode, ArrayList<IAtomicConceptOfLabel>>();
+        // need another mapping because here we allow < and > between the same pair of nodes
+        HashSet<IMappingElement<INode>> mapping = new HashSet<>();
+        Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols = new HashMap<>();
 
+        long sourceNodeCount = (long) (sourceContext.getRoot().getDescendantCount() + 1);
+        long targetNodeCount = (long) (targetContext.getRoot().getDescendantCount() + 1);
+        ProgressContainer progressContainer = new ProgressContainer(sourceNodeCount * targetNodeCount, log);
         log.info("DJ...");
-        treeDisjoint(sourceContext.getRoot(), targetContext.getRoot());
+        treeDisjoint(sourceContext.getRoot(), targetContext.getRoot(),
+                acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         int dj = mapping.size();
         log.info("Links found DJ: " + dj);
-        counter = 0;
 
+        progressContainer = new ProgressContainer(sourceNodeCount * targetNodeCount, log);
         log.info("LG...");
-        direction = true;
-        treeSubsumedBy(sourceContext.getRoot(), targetContext.getRoot());
+        treeSubsumedBy(sourceContext.getRoot(), targetContext.getRoot(),
+                true, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         int lg = mapping.size() - dj;
         log.info("Links found LG: " + lg);
-        counter = 0;
 
+        progressContainer = new ProgressContainer(sourceNodeCount * targetNodeCount, log);
         log.info("MG...");
-        direction = false;
-        treeSubsumedBy(targetContext.getRoot(), sourceContext.getRoot());
+        treeSubsumedBy(targetContext.getRoot(), sourceContext.getRoot(),
+                false, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         int mg = mapping.size() - dj - lg;
         log.info("Links found MG: " + mg);
-        counter = 0;
 
         log.info("TreeEquiv...");
         IContextMapping<INode> result = treeEquiv(mapping, sourceContext, targetContext);
@@ -70,74 +74,92 @@ public class OptimizedStageTreeMatcherIt extends OptimizedStageTreeMatcher {
     }
 
     @Override
-    protected void treeDisjoint(INode n1, INode n2) throws TreeMatcherException {
-        nodeTreeDisjoint(n1, n2);
+    protected void treeDisjoint(INode n1, INode n2,
+                                IContextMapping<IAtomicConceptOfLabel> acolMapping,
+                                Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
+                                Map<String, IAtomicConceptOfLabel> sourceAcols,
+                                Map<String, IAtomicConceptOfLabel> targetAcols,
+                                HashSet<IMappingElement<INode>> mapping,
+                                ProgressContainer progressContainer) throws TreeMatcherException {
+        nodeTreeDisjoint(n1, n2, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         for (Iterator<INode> i = n1.getChildren(); i.hasNext(); ) {
-            treeDisjoint(i.next(), n2);
+            treeDisjoint(i.next(), n2, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         }
     }
 
     @Override
-    protected void nodeTreeDisjoint(INode n1, INode n2) throws TreeMatcherException {
-        if (findRelation(n1.getAncestors(), n2, IMappingElement.DISJOINT)) {
+    protected void nodeTreeDisjoint(INode n1, INode n2,
+                                    IContextMapping<IAtomicConceptOfLabel> acolMapping,
+                                    Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
+                                    Map<String, IAtomicConceptOfLabel> sourceAcols,
+                                    Map<String, IAtomicConceptOfLabel> targetAcols,
+                                    HashSet<IMappingElement<INode>> mapping,
+                                    ProgressContainer progressContainer) throws TreeMatcherException {
+        if (findRelation(n1.getAncestors(), n2, IMappingElement.DISJOINT, mapping)) {
             // we skip n2 subtree, so adjust the counter
-            final long skipTo = counter + n2.getDescendantCount();
-            while (counter < skipTo) {
-                progress();
+            final long skipTo = progressContainer.getCounter() + n2.getDescendantCount();
+            while (progressContainer.getCounter() < skipTo) {
+                progressContainer.progress();
             }
 
             return;
         }
 
-        if (smatchMatcher.nodeDisjoint(acolMapping, nmtAcols, sourceAcols, targetAcols, n1, n2)) {
-            addRelation(n1, n2, IMappingElement.DISJOINT);
+        if (nodeMatcher.nodeDisjoint(acolMapping, nmtAcols, sourceAcols, targetAcols, n1, n2)) {
+            addRelation(n1, n2, IMappingElement.DISJOINT, mapping);
             // we skip n2 subtree, so adjust the counter
-            final long skipTo = counter + n2.getDescendantCount();
-            while (counter < skipTo) {
-                progress();
+            final long skipTo = progressContainer.getCounter() + n2.getDescendantCount();
+            while (progressContainer.getCounter() < skipTo) {
+                progressContainer.progress();
             }
             return;
         }
 
-        progress();
+        progressContainer.progress();
 
         for (Iterator<INode> i = n2.getChildren(); i.hasNext(); ) {
-            nodeTreeDisjoint(n1, i.next());
+            nodeTreeDisjoint(n1, i.next(), acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
         }
     }
 
     @Override
-    protected boolean treeSubsumedBy(INode n1, INode n2) throws TreeMatcherException {
-        if (findRelation(n1, n2, IMappingElement.DISJOINT)) {
+    protected boolean treeSubsumedBy(INode n1, INode n2, boolean direction,
+                                     IContextMapping<IAtomicConceptOfLabel> acolMapping,
+                                     Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
+                                     Map<String, IAtomicConceptOfLabel> sourceAcols,
+                                     Map<String, IAtomicConceptOfLabel> targetAcols,
+                                     HashSet<IMappingElement<INode>> mapping,
+                                     ProgressContainer progressContainer) throws TreeMatcherException {
+        if (findRelation(n1, n2, IMappingElement.DISJOINT, mapping)) {
             // we skip n1 subtree, so adjust the counter
-            final long skipTo = counter + n1.getDescendantCount();
-            while (counter < skipTo) {
-                progress();
+            final long skipTo = progressContainer.getCounter() + n1.getDescendantCount();
+            while (progressContainer.getCounter() < skipTo) {
+                progressContainer.progress();
             }
 
             return false;
         }
 
-        progress();
-        if (!smatchMatcher.nodeSubsumedBy(acolMapping, nmtAcols, sourceAcols, targetAcols, n1, n2)) {
+        progressContainer.progress();
+        if (!nodeMatcher.nodeSubsumedBy(n1, n2, acolMapping, nmtAcols, sourceAcols, targetAcols)) {
             for (Iterator<INode> i = n1.getChildren(); i.hasNext(); ) {
-                treeSubsumedBy(i.next(), n2);
+                treeSubsumedBy(i.next(), n2, direction, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer);
             }
         } else {
             boolean lastNodeFound = false;
             for (Iterator<INode> i = n2.getChildren(); i.hasNext(); ) {
-                if (treeSubsumedBy(n1, i.next())) {
+                if (treeSubsumedBy(n1, i.next(), direction, acolMapping, nmtAcols, sourceAcols, targetAcols, mapping, progressContainer)) {
                     lastNodeFound = true;
                 }
             }
             if (!lastNodeFound) {
-                addSubsumptionRelation(n1, n2);
+                addSubsumptionRelation(n1, n2, direction, mapping);
             }
 
             // we skip n1 subtree, so adjust the counter
-            final long skipTo = counter + n1.getDescendantCount();
-            while (counter < skipTo) {
-                progress();
+            final long skipTo = progressContainer.getCounter() + n1.getDescendantCount();
+            while (progressContainer.getCounter() < skipTo) {
+                progressContainer.progress();
             }
             return true;
         }
@@ -145,7 +167,7 @@ public class OptimizedStageTreeMatcherIt extends OptimizedStageTreeMatcher {
         return false;
     }
 
-    protected boolean findRelation(Iterator<INode> sourceNodes, INode targetNode, char relation) {
+    protected boolean findRelation(Iterator<INode> sourceNodes, INode targetNode, char relation, HashSet<IMappingElement<INode>> mapping) {
         while (sourceNodes.hasNext()) {
             INode sourceNode = sourceNodes.next();
             if (mapping.contains(createMappingElement(sourceNode, targetNode, relation))) {

@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.matchers.structure.node;
 
-import it.unitn.disi.common.components.IConfigurable;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.trees.INode;
@@ -14,7 +13,7 @@ import java.util.Map;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public interface INodeMatcher extends IConfigurable {
+public interface INodeMatcher {
 
     /**
      * Matches two nodes and returns a relation between them.

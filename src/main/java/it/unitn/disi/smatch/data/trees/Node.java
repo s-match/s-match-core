@@ -127,7 +127,7 @@ public class Node extends BaseNode<INode, INodeData> implements INode, INodeData
         }
 
         if (null == acols) {
-            acols = new ArrayList<IAtomicConceptOfLabel>();
+            acols = new ArrayList<>();
         }
         acols.add(index, acol);
     }
@@ -153,11 +153,9 @@ public class Node extends BaseNode<INode, INodeData> implements INode, INodeData
         if (result) {
             if (null != children) {
                 for (INode child : children) {
-                    if (child instanceof INode) {
-                        result = result && ((INode) child).getNodeData().isSubtreePreprocessed();
-                        if (!result) {
-                            break;
-                        }
+                    result = child.getNodeData().isSubtreePreprocessed();
+                    if (!result) {
+                        break;
                     }
                 }
             }

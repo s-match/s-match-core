@@ -1,13 +1,11 @@
 package it.unitn.disi.smatch.matchers.element.gloss;
 
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
 import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
 import it.unitn.disi.smatch.oracles.LinguisticOracleException;
 
-import java.util.Properties;
 import java.util.StringTokenizer;
 
 /**
@@ -20,21 +18,21 @@ import java.util.StringTokenizer;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class WNExtendedSemanticGlossComparison extends BasicGlossMatcher implements ISenseGlossBasedElementLevelSemanticMatcher {
+public class WNExtendedSemanticGlossComparison extends BaseGlossMatcher implements ISenseGlossBasedElementLevelSemanticMatcher {
 
     // the words which are cut off from the area of discourse
-    private static final String MEANINGLESS_WORDS_KEY = "meaninglessWords";
-    private String meaninglessWords = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
+    public final static String DEFAULT_MEANINGLESS_WORDS = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(MEANINGLESS_WORDS_KEY)) {
-                meaninglessWords = newProperties.getProperty(MEANINGLESS_WORDS_KEY) + " ";
-            }
-        }
-        return result;
+    protected final String meaninglessWords;
+
+    public WNExtendedSemanticGlossComparison() {
+        super(null, null);
+        this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
+    }
+
+    public WNExtendedSemanticGlossComparison(String meaninglessWords) {
+        super(null, null);
+        this.meaninglessWords = meaninglessWords;
     }
 
     /**

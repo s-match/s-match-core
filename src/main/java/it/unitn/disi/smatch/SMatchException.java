@@ -1,13 +1,13 @@
 package it.unitn.disi.smatch;
 
-import it.unitn.disi.common.components.ConfigurableException;
+import it.unitn.disi.common.DISIException;
 
 /**
  * Main S-Match exception.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class SMatchException extends ConfigurableException {
+public class SMatchException extends DISIException {
 
     /**
      * Constructor.

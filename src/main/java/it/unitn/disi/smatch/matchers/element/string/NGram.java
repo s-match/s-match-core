@@ -1,12 +1,9 @@
 package it.unitn.disi.smatch.matchers.element.string;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.IStringBasedElementLevelSemanticMatcher;
 
 import java.util.ArrayList;
-import java.util.Properties;
 
 /**
  * Implements NGram matcher. See Element Level Semantic matchers paper for more details.
@@ -20,29 +17,21 @@ import java.util.Properties;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class NGram extends Configurable implements IStringBasedElementLevelSemanticMatcher {
+public class NGram implements IStringBasedElementLevelSemanticMatcher {
 
-    private static final String GRAM_LENGTH_KEY = "gramlength";
-    protected int gramlength = 3;
+    protected final int gramlength;
 
-    private static final String THRESHOLD_KEY = "threshold";
-    protected double threshold = 0.9;
+    protected final double threshold;
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(GRAM_LENGTH_KEY)) {
-                gramlength = Integer.parseInt(newProperties.getProperty(GRAM_LENGTH_KEY));
-            }
-
-            if (newProperties.containsKey(THRESHOLD_KEY)) {
-                threshold = Double.parseDouble(newProperties.getProperty(THRESHOLD_KEY));
-            }
-        }
-        return result;
+    public NGram() {
+        gramlength = 3;
+        threshold = 0.9;
     }
 
+    public NGram(int gramlength, double threshold) {
+        this.gramlength = gramlength;
+        this.threshold = threshold;
+    }
 
     /**
      * Computes the relation with NGram matcher.
@@ -82,7 +71,7 @@ public class NGram extends Configurable implements IStringBasedElementLevelSeman
      */
     private static String[] generateNGrams(String str, int gramlength) {
         if (str == null || str.length() == 0) return null;
-        ArrayList<String> grams = new ArrayList<String>();
+        ArrayList<String> grams = new ArrayList<>();
         int length = str.length();
         String gram;
         if (length < gramlength) {

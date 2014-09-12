@@ -1,20 +1,19 @@
 package it.unitn.disi.smatch.data.matrices;
 
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 
 import java.util.Arrays;
 
 /**
  * Implements a Java Sparse Array (see 10.1.1.13.7544.pdf).
- * To be used with minimal matchers, because CRS does work for them.
+ * Not to be used with minimal matchers, because CRS does not work for them.
  * MM might walk a tree in "unpredictable" manner and does not signal end of row.
  * Does not have max density limit.
  * No boundary checks.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class JavaSparseArray extends Configurable implements IMatchMatrix, IMatchMatrixFactory {
+public class JavaSparseArray implements IMatchMatrix, IMatchMatrixFactory {
 
     private int rows;
     private int cols;

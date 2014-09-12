@@ -115,7 +115,7 @@ public class AtomicConceptOfLabel extends IndexedObject implements IAtomicConcep
         }
 
         if (null == senses) {
-            senses = new ArrayList<ISense>();
+            senses = new ArrayList<>();
         }
 
         if (-1 == senses.indexOf(sense)) {

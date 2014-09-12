@@ -1,6 +1,10 @@
 package it.unitn.disi.smatch.renderers.context;
 
-import it.unitn.disi.smatch.data.trees.*;
+import it.unitn.disi.smatch.data.trees.IBaseContext;
+import it.unitn.disi.smatch.data.trees.IBaseNode;
+import it.unitn.disi.smatch.data.trees.IBaseNodeData;
+import it.unitn.disi.smatch.data.trees.Node;
+import it.unitn.disi.smatch.data.util.ProgressContainer;
 import it.unitn.disi.smatch.loaders.ILoader;
 
 import java.io.BufferedWriter;
@@ -16,9 +20,17 @@ import java.util.Iterator;
  */
 public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext<IBaseNode<IBaseNode, IBaseNodeData>>> {
 
+    public TabPathContextRenderer() {
+        super();
+    }
+
+    public TabPathContextRenderer(boolean sort) {
+        super(sort);
+    }
+
     @SuppressWarnings({"unchecked"})
-    protected void process(IBaseContext<IBaseNode<IBaseNode, IBaseNodeData>> context, BufferedWriter out) throws IOException, ContextRendererException {
-        ArrayList<IBaseNode<IBaseNode, IBaseNodeData>> nodeQ = new ArrayList<IBaseNode<IBaseNode, IBaseNodeData>>();
+    protected void process(IBaseContext<IBaseNode<IBaseNode, IBaseNodeData>> context, BufferedWriter out, ProgressContainer progressContainer) throws IOException, ContextRendererException {
+        ArrayList<IBaseNode<IBaseNode, IBaseNodeData>> nodeQ = new ArrayList<>();
         nodeQ.add(context.getRoot());
         IBaseNode<IBaseNode, IBaseNodeData> curNode;
         while (!nodeQ.isEmpty()) {
@@ -26,11 +38,11 @@ public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext
             if (0 == curNode.getChildCount()) {
                 out.write(getPathToRoot(curNode));
             }
-            reportProgress();
+            progressContainer.progress();
             if (curNode.getChildCount() > 0) {
                 Iterator<IBaseNode> children;
                 if (sort) {
-                    ArrayList<IBaseNode> childrenList = new ArrayList<IBaseNode>(curNode.getChildrenList());
+                    ArrayList<IBaseNode> childrenList = new ArrayList<>(curNode.getChildrenList());
                     Collections.sort(childrenList, Node.NODE_NAME_COMPARATOR);
                     children = childrenList.iterator();
                 } else {

@@ -1,13 +1,12 @@
 package it.unitn.disi.smatch.filters;
 
 import it.unitn.disi.smatch.SMatchConstants;
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -16,7 +15,7 @@ import java.util.List;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class RedundantGeneratorMappingFilter extends Configurable implements IMappingFilter {
+public class RedundantGeneratorMappingFilter implements IMappingFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RedundantGeneratorMappingFilter.class);
 

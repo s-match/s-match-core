@@ -1,13 +1,13 @@
 package it.unitn.disi.smatch.matchers.element.gloss;
 
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
 import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
+import it.unitn.disi.smatch.oracles.ILinguisticOracle;
+import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.oracles.LinguisticOracleException;
 
-import java.util.Properties;
 import java.util.StringTokenizer;
 
 /**
@@ -22,30 +22,19 @@ import java.util.StringTokenizer;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class WNExtendedGlossComparison extends BasicGlossMatcher implements ISenseGlossBasedElementLevelSemanticMatcher {
+public class WNExtendedGlossComparison extends WNExtendedGloss implements ISenseGlossBasedElementLevelSemanticMatcher {
 
-    private static final String THRESHOLD_KEY = "threshold";
-    private int threshold = 5;
-
-    // the words which are cut off from the area of discourse
-    private static final String MEANINGLESS_WORDS_KEY = "meaninglessWords";
-    private String meaninglessWords = "of on to their than from for by in at is are have has the a as with your etc our into its his her which him among those against ";
-
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(THRESHOLD_KEY)) {
-                threshold = Integer.parseInt(newProperties.getProperty(THRESHOLD_KEY));
-            }
-
-            if (newProperties.containsKey(MEANINGLESS_WORDS_KEY)) {
-                meaninglessWords = newProperties.getProperty(MEANINGLESS_WORDS_KEY) + " ";
-            }
-        }
-        return result;
+    public WNExtendedGlossComparison(ILinguisticOracle linguisticOracle, ISenseMatcher senseMatcher) {
+        super(linguisticOracle, senseMatcher);
     }
 
+    public WNExtendedGlossComparison(ILinguisticOracle linguisticOracle, ISenseMatcher senseMatcher, int threshold) {
+        super(linguisticOracle, senseMatcher, threshold);
+    }
+
+    public WNExtendedGlossComparison(ILinguisticOracle linguisticOracle, ISenseMatcher senseMatcher, int threshold, String meaninglessWords) {
+        super(linguisticOracle, senseMatcher, threshold, meaninglessWords);
+    }
 
     /**
      * Computes the relation for extended gloss matcher.

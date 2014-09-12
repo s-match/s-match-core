@@ -1,10 +1,8 @@
 package it.unitn.disi.smatch.matchers.element.string;
 
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.IStringBasedElementLevelSemanticMatcher;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -15,15 +13,15 @@ import java.util.HashMap;
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
 
-public class GSuffix extends Configurable implements IStringBasedElementLevelSemanticMatcher {
+public class GSuffix implements IStringBasedElementLevelSemanticMatcher {
 
     //prefix -> relation
     //based on http://en.wiktionary.org/wiki/Appendix:Prefixes:English
 
-    private static final HashMap<String, Character> prefixes = new HashMap<String, Character>();
+    private static final HashMap<String, Character> prefixes = new HashMap<>();
 
     //for roots
-    private static final HashMap<String, Character> suffixes = new HashMap<String, Character>();
+    private static final HashMap<String, Character> suffixes = new HashMap<>();
 
     static {
         prefixes.put("a", IMappingElement.EQUIVALENCE);

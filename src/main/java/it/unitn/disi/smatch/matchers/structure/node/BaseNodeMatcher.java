@@ -1,8 +1,5 @@
 package it.unitn.disi.smatch.matchers.structure.node;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
-import it.unitn.disi.common.components.ConfigurationKeyMissingException;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
@@ -13,30 +10,16 @@ import it.unitn.disi.smatch.deciders.SATSolverException;
 import java.util.*;
 
 /**
- * Contains routines used by other matchers. Needs SATSolver configuration parameter pointing to a class implementing
- * {@link it.unitn.disi.smatch.deciders.ISATSolver} to solve SAT problems.
+ * Contains routines used by other matchers.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class BaseNodeMatcher extends Configurable {
+public abstract class BaseNodeMatcher {
 
-    private static final String SAT_SOLVER_KEY = "SATSolver";
-    protected ISATSolver satSolver = null;
+    protected final ISATSolver satSolver;
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        Properties oldProperties = new Properties();
-        oldProperties.putAll(properties);
-
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(SAT_SOLVER_KEY)) {
-                satSolver = (ISATSolver) configureComponent(satSolver, oldProperties, newProperties, "SAT solver", SAT_SOLVER_KEY, ISATSolver.class);
-            } else {
-                throw new ConfigurationKeyMissingException(SAT_SOLVER_KEY);
-            }
-        }
-        return result;
+    protected BaseNodeMatcher(ISATSolver satSolver) {
+        this.satSolver = satSolver;
     }
 
     /**
@@ -131,7 +114,7 @@ public class BaseNodeMatcher extends Configurable {
             }
 
             // collect acols
-            acols = new ArrayList<IAtomicConceptOfLabel>(acolCount);
+            acols = new ArrayList<>(acolCount);
             curNode = node;
             while (null != curNode) {
                 acols.addAll(curNode.getNodeData().getACoLsList());
@@ -142,7 +125,7 @@ public class BaseNodeMatcher extends Configurable {
             // cache also acol ids for node - for the nodes above it they should be cached already
             if (node != null) {
                 for (IAtomicConceptOfLabel acol : node.getNodeData().getACoLsList()) {
-                    acolsMap.put(node.getNodeData().getId() + "." + Integer.toString(acol.getId()), acol);
+                    acolsMap.put(node.getNodeData().getId() + "_" + Integer.toString(acol.getId()), acol);
                 }
             }
         }
@@ -167,11 +150,11 @@ public class BaseNodeMatcher extends Configurable {
      */
     protected ArrayList<ArrayList<String>> parseFormula(HashMap<IAtomicConceptOfLabel, String> hashConceptNumber,
                                                         Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
-        ArrayList<ArrayList<String>> representation = new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> representation = new ArrayList<>();
         boolean saved_negation = false;
         for (StringTokenizer clauseTokenizer = new StringTokenizer(node.getNodeData().getcNodeFormula(), "&"); clauseTokenizer.hasMoreTokens(); ) {
             String clause = clauseTokenizer.nextToken();
-            ArrayList<String> clause_vec = new ArrayList<String>();
+            ArrayList<String> clause_vec = new ArrayList<>();
             for (StringTokenizer varTokenizer = new StringTokenizer(clause, "|() "); varTokenizer.hasMoreTokens(); ) {
                 String var = varTokenizer.nextToken();
                 boolean negation = false;
@@ -214,7 +197,7 @@ public class BaseNodeMatcher extends Configurable {
 
     protected static int negateFormulaInList(HashMap<IAtomicConceptOfLabel, String> hashConceptNumber, ArrayList<ArrayList<String>> pivot, ArrayList<ArrayList<String>> result) {
         result.clear();
-        ArrayList<String> firstClause = new ArrayList<String>();
+        ArrayList<String> firstClause = new ArrayList<>();
         int numberOfVariables = hashConceptNumber.size();
         for (ArrayList<String> v : pivot) {
             if (v.size() == 1) {
@@ -225,11 +208,11 @@ public class BaseNodeMatcher extends Configurable {
                 final String lsn = Integer.toString(numberOfVariables);
                 final String negatedLSN = "-" + lsn;
                 firstClause.add(negatedLSN);
-                ArrayList<String> longClause = new ArrayList<String>();
+                ArrayList<String> longClause = new ArrayList<>();
                 longClause.add(negatedLSN);
                 for (String var : v) {
                     longClause.add(var);
-                    ArrayList<String> tmp = new ArrayList<String>();
+                    ArrayList<String> tmp = new ArrayList<>();
                     tmp.add(lsn);
                     tmp.add(changeSign(var));
                     result.add(tmp);

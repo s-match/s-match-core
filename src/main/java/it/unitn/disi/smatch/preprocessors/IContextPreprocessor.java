@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.preprocessors;
 
-import it.unitn.disi.common.components.IConfigurable;
 import it.unitn.disi.smatch.data.trees.IContext;
 
 /**
@@ -9,7 +8,7 @@ import it.unitn.disi.smatch.data.trees.IContext;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public interface IContextPreprocessor extends IConfigurable {
+public interface IContextPreprocessor {
 
     /**
      * This method translates natural language labels of a context into logical formulas.

@@ -1,9 +1,7 @@
 package it.unitn.disi.smatch.oracles;
 
-import it.unitn.disi.common.components.IConfigurable;
 import it.unitn.disi.smatch.data.ling.ISense;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -12,7 +10,7 @@ import java.util.List;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public interface ILinguisticOracle extends IConfigurable {
+public interface ILinguisticOracle {
 
     /**
      * Checks if lemmas of two strings are equal (e. g. the string are the same modulo inflections).
@@ -53,9 +51,10 @@ public interface ILinguisticOracle extends IConfigurable {
 
     /**
      * Returns list of possible multiword endings.
+     *
      * @param beginning first word of a multiword
      * @return list of possible multiword endings
      * @throws LinguisticOracleException LinguisticOracleException
      */
-    ArrayList<ArrayList<String>> getMultiwords(String beginning) throws LinguisticOracleException;
+    List<List<String>> getMultiwords(String beginning) throws LinguisticOracleException;
 }

@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.matchers.element.string;
 
-import it.unitn.disi.common.components.Configurable;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.IStringBasedElementLevelSemanticMatcher;
 
@@ -13,7 +12,7 @@ import java.util.HashMap;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class GPrefix extends Configurable implements IStringBasedElementLevelSemanticMatcher {
+public class GPrefix implements IStringBasedElementLevelSemanticMatcher {
 
     //suffix -> relation
     //based on http://en.wiktionary.org/wiki/Appendix:Suffixes:English
@@ -22,7 +21,7 @@ public class GPrefix extends Configurable implements IStringBasedElementLevelSem
     //also here http://en.wikipedia.org/wiki/List_of_English_suffixes
     //but not considered (yet)
 
-    private static final HashMap<String, Character> suffixes = new HashMap<String, Character>();
+    private static final HashMap<String, Character> suffixes = new HashMap<>();
 
     static {
         suffixes.put("a", IMappingElement.EQUIVALENCE);

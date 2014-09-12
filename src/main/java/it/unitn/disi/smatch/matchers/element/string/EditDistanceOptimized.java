@@ -1,11 +1,7 @@
 package it.unitn.disi.smatch.matchers.element.string;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.IStringBasedElementLevelSemanticMatcher;
-
-import java.util.Properties;
 
 /**
  * Optimized edit distance. Levenshtein Distance Algorithm: Java Implementation by Chas Emerick.
@@ -17,20 +13,16 @@ import java.util.Properties;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class EditDistanceOptimized extends Configurable implements IStringBasedElementLevelSemanticMatcher {
+public class EditDistanceOptimized implements IStringBasedElementLevelSemanticMatcher {
 
-    private static final String THRESHOLD_KEY = "threshold";
-    private double threshold = 0.9;
+    private final double threshold;
 
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(THRESHOLD_KEY)) {
-                threshold = Double.parseDouble(newProperties.getProperty(THRESHOLD_KEY));
-            }
-        }
-        return result;
+    public EditDistanceOptimized() {
+        threshold = 0.9;
+    }
+
+    public EditDistanceOptimized(double threshold) {
+        this.threshold = threshold;
     }
 
     /**

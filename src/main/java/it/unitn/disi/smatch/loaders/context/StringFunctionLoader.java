@@ -4,8 +4,6 @@ import it.unitn.disi.smatch.data.trees.Context;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.loaders.ILoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +17,6 @@ import java.util.List;
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
 public class StringFunctionLoader extends BaseContextLoader<IContext> implements IContextLoader {
-
-    private static final Logger log = LoggerFactory.getLogger(StringFunctionLoader.class);
 
     private final static char COMMA = ',';
     private final static char OPEN_PARENTHESIS = '(';
@@ -38,7 +34,6 @@ public class StringFunctionLoader extends BaseContextLoader<IContext> implements
         IContext result = new Context();
         parse(location, result, null);
         createIds(result);
-        log.info("Parsed nodes: " + nodesParsed);
         return result;
     }
 
@@ -100,7 +95,7 @@ public class StringFunctionLoader extends BaseContextLoader<IContext> implements
      */
     static List<String> getCommaTokens(String inString) {
         String input = inString.trim();
-        List<String> tokens = new ArrayList<String>();
+        List<String> tokens = new ArrayList<>();
         String token;
         while (0 < input.length()) {
             if (COMMA == input.charAt(0)) {

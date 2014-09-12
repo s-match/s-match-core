@@ -3,9 +3,8 @@ package it.unitn.disi.smatch.renderers.mapping;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.data.util.MappingProgressContainer;
 import it.unitn.disi.smatch.loaders.ILoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -20,10 +19,8 @@ import java.util.ArrayList;
  */
 public class TabPathMappingRenderer extends BaseFileMappingRenderer implements IMappingRenderer {
 
-    private static final Logger log = LoggerFactory.getLogger(TabPathMappingRenderer.class);
-
     @Override
-    protected void process(IContextMapping<INode> mapping, BufferedWriter out) throws IOException {
+    protected void process(IContextMapping<INode> mapping, BufferedWriter out, MappingProgressContainer progressContainer) throws IOException {
         for (IMappingElement<INode> mappingElement : mapping) {
             String sourceConceptName = getPathToRoot(mappingElement.getSource());
             String targetConceptName = getPathToRoot(mappingElement.getTarget());
@@ -31,14 +28,14 @@ public class TabPathMappingRenderer extends BaseFileMappingRenderer implements I
 
             out.write(sourceConceptName + "\t\t" + relation + "\t\t" + targetConceptName + "\n");
 
-            countRelation(relation);
-            reportProgress();
+            progressContainer.countRelation(relation);
+            progressContainer.progress();
         }
     }
 
     private String getPathToRoot(INode node) {
         StringBuilder result = new StringBuilder();
-        ArrayList<String> path = new ArrayList<String>();
+        ArrayList<String> path = new ArrayList<>();
         INode curNode = node;
         while (null != curNode) {
             path.add(0, curNode.getNodeData().getName());

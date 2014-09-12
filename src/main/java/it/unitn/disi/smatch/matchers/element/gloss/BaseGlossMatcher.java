@@ -1,8 +1,5 @@
 package it.unitn.disi.smatch.matchers.element.gloss;
 
-import it.unitn.disi.common.components.Configurable;
-import it.unitn.disi.common.components.ConfigurableException;
-import it.unitn.disi.common.components.ConfigurationKeyMissingException;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
@@ -13,7 +10,6 @@ import it.unitn.disi.smatch.oracles.SenseMatcherException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * Matches glosses of word senses. Needs the following configuration parameters:
@@ -25,37 +21,17 @@ import java.util.Properties;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class BasicGlossMatcher extends Configurable {
+public abstract class BaseGlossMatcher {
 
-    private static final String LINGUISTIC_ORACLE_KEY = "linguisticOracle";
-    private ILinguisticOracle linguisticOracle = null;
+    protected final ILinguisticOracle linguisticOracle;
+    protected final ISenseMatcher senseMatcher;
 
-    private static final String SENSE_MATCHER_KEY = "senseMatcher";
-    private ISenseMatcher senseMatcher = null;
-
-    @Override
-    public boolean setProperties(Properties newProperties) throws ConfigurableException {
-        Properties oldProperties = new Properties();
-        oldProperties.putAll(properties);
-
-        boolean result = super.setProperties(newProperties);
-        if (result) {
-            if (newProperties.containsKey(SENSE_MATCHER_KEY)) {
-                senseMatcher = (ISenseMatcher) configureComponent(senseMatcher, oldProperties, newProperties, "sense matcher", SENSE_MATCHER_KEY, ISenseMatcher.class);
-            } else {
-                throw new ConfigurationKeyMissingException(SENSE_MATCHER_KEY);
-            }
-
-            if (newProperties.containsKey(LINGUISTIC_ORACLE_KEY)) {
-                linguisticOracle = (ILinguisticOracle) configureComponent(linguisticOracle, oldProperties, newProperties, "linguistic oracle", LINGUISTIC_ORACLE_KEY, ILinguisticOracle.class);
-            } else {
-                throw new ConfigurationKeyMissingException(LINGUISTIC_ORACLE_KEY);
-            }
-        }
-        return result;
+    public BaseGlossMatcher(ILinguisticOracle linguisticOracle, ISenseMatcher senseMatcher) {
+        this.linguisticOracle = linguisticOracle;
+        this.senseMatcher = senseMatcher;
     }
 
-    //Next 4 method are used by element level matchers to calculate relations between words
+    // next 4 methods are used by element level matchers to calculate relations between words
 
     /**
      * Checks the source is more general than the target or not.
@@ -76,9 +52,7 @@ public class BasicGlossMatcher extends Configurable {
                 }
             }
             return false;
-        } catch (LinguisticOracleException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        } catch (SenseMatcherException e) {
+        } catch (LinguisticOracleException | SenseMatcherException e) {
             throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
@@ -102,9 +76,7 @@ public class BasicGlossMatcher extends Configurable {
                 }
             }
             return false;
-        } catch (LinguisticOracleException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        } catch (SenseMatcherException e) {
+        } catch (LinguisticOracleException | SenseMatcherException e) {
             throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
@@ -128,9 +100,7 @@ public class BasicGlossMatcher extends Configurable {
                 }
             }
             return false;
-        } catch (LinguisticOracleException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        } catch (SenseMatcherException e) {
+        } catch (LinguisticOracleException | SenseMatcherException e) {
             throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
@@ -154,9 +124,7 @@ public class BasicGlossMatcher extends Configurable {
                 }
             }
             return false;
-        } catch (LinguisticOracleException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        } catch (SenseMatcherException e) {
+        } catch (LinguisticOracleException | SenseMatcherException e) {
             throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
@@ -172,7 +140,7 @@ public class BasicGlossMatcher extends Configurable {
      * @throws LinguisticOracleException LinguisticOracleException
      */
     public String getExtendedGloss(ISense original, int intSource, char Rel) throws LinguisticOracleException {
-        List<ISense> children = new ArrayList<ISense>();
+        List<ISense> children = new ArrayList<>();
         StringBuilder result = new StringBuilder();
         if (Rel == IMappingElement.LESS_GENERAL) {
             children = original.getChildren(intSource);

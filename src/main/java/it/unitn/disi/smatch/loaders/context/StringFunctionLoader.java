@@ -16,7 +16,7 @@ import java.util.List;
  * @author Juan Pane pane@disi.unitn.it
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class StringFunctionLoader extends BaseContextLoader<IContext> implements IContextLoader {
+public class StringFunctionLoader extends BaseContextLoader<IContext, INode> implements IContextLoader {
 
     private final static char COMMA = ',';
     private final static char OPEN_PARENTHESIS = '(';

@@ -1,6 +1,6 @@
 package it.unitn.disi.smatch.preprocessors;
 
-import it.unitn.disi.smatch.SMatchConstants;
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.trees.IContext;
@@ -23,7 +23,7 @@ import java.util.*;
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  * @author Moaz Reyad <reyad@disi.unitn.it>
  */
-public class DefaultContextPreprocessor implements IContextPreprocessor {
+public class DefaultContextPreprocessor extends BaseContextPreprocessor implements IAsyncContextPreprocessor {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultContextPreprocessor.class);
 
@@ -48,24 +48,19 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
      */
     public static final String DEFAULT_NUMBER_CHARACTERS = "1234567890";
 
-    private final ISenseMatcher senseMatcher;
-    private final ILinguisticOracle linguisticOracle;
+    protected final ISenseMatcher senseMatcher;
+    protected final ILinguisticOracle linguisticOracle;
 
-    private final boolean debugLabels;
-    private final boolean debugUnrecognizedWords;
-
-    private final String meaninglessWords;
-    private final String andWords;
-    private final String orWords;
-    private final String notWords;
-    private final String numberCharacters;
+    protected final String meaninglessWords;
+    protected final String andWords;
+    protected final String orWords;
+    protected final String notWords;
+    protected final String numberCharacters;
 
     public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle) {
+        super(null);
         this.senseMatcher = senseMatcher;
         this.linguisticOracle = linguisticOracle;
-
-        this.debugLabels = false;
-        this.debugUnrecognizedWords = false;
 
         this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
         this.andWords = DEFAULT_AND_WORDS;
@@ -74,36 +69,48 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
         this.numberCharacters = DEFAULT_NUMBER_CHARACTERS;
     }
 
-    public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
-                                      boolean debugLabels, boolean debugUnrecognizedWords) {
+    public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle, IContext context) {
+        super(context);
         this.senseMatcher = senseMatcher;
         this.linguisticOracle = linguisticOracle;
-
-        this.debugLabels = debugLabels;
-        this.debugUnrecognizedWords = debugUnrecognizedWords;
 
         this.meaninglessWords = DEFAULT_MEANINGLESS_WORDS;
         this.andWords = DEFAULT_AND_WORDS;
         this.orWords = DEFAULT_OR_WORDS;
         this.notWords = DEFAULT_NOT_WORDS;
         this.numberCharacters = DEFAULT_NUMBER_CHARACTERS;
+
+        setTotal(4 * context.getNodesCount());
     }
 
     public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
-                                      boolean debugLabels, boolean debugUnrecognizedWords,
                                       String meaninglessWords, String andWords,
                                       String orWords, String notWords, String numberCharacters) {
+        super(null);
         this.senseMatcher = senseMatcher;
         this.linguisticOracle = linguisticOracle;
-
-        this.debugLabels = debugLabels;
-        this.debugUnrecognizedWords = debugUnrecognizedWords;
 
         this.meaninglessWords = meaninglessWords;
         this.andWords = andWords;
         this.orWords = orWords;
         this.notWords = notWords;
         this.numberCharacters = numberCharacters;
+    }
+
+    public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
+                                      String meaninglessWords, String andWords, String orWords,
+                                      String notWords, String numberCharacters, IContext context) {
+        super(context);
+        this.senseMatcher = senseMatcher;
+        this.linguisticOracle = linguisticOracle;
+
+        this.meaninglessWords = meaninglessWords;
+        this.andWords = andWords;
+        this.orWords = orWords;
+        this.notWords = notWords;
+        this.numberCharacters = numberCharacters;
+
+        setTotal(4 * context.getNodesCount());
     }
 
     /**
@@ -114,27 +121,36 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
      * @param context context to be preprocessed
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
+    @Override
     public void preprocess(IContext context) throws ContextPreprocessorException {
+        if (0 == getTotal()) {
+            setTotal(4 * context.getNodesCount());
+        }
         Set<String> unrecognizedWords = new HashSet<>();
 
-        // construct cLabs
         context = buildCLabs(context, unrecognizedWords);
-        // sense filtering
         context = findMultiwordsInContextStructure(context);
-        try {
-            senseFiltering(context);
-        } catch (SenseMatcherException e) {
-            throw new ContextPreprocessorException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
-        }
+        senseFiltering(context);
 
-        log.debug("Unrecognized words: " + unrecognizedWords.size());
-        if (debugUnrecognizedWords) {
+        reportUnrecognizedWords(unrecognizedWords);
+    }
+
+    protected void reportUnrecognizedWords(Set<String> unrecognizedWords) {
+        if (log.isDebugEnabled()) {
+            log.debug("Unrecognized words: " + unrecognizedWords.size());
+        }
+        if (log.isTraceEnabled()) {
             Set<String> sortedWords = new TreeSet<>(unrecognizedWords);
             for (String unrecognizedWord : sortedWords) {
-                log.debug("Unrecognized word: " + unrecognizedWord);
+                log.trace("Unrecognized word: " + unrecognizedWord);
             }
         }
-        unrecognizedWords.clear();
+    }
+
+    @Override
+    public AsyncTask<Void, INode> asyncPreprocess(IContext context) {
+        return new DefaultContextPreprocessor(senseMatcher, linguisticOracle,
+                meaninglessWords, andWords, orWords, notWords, numberCharacters, context);
     }
 
     /**
@@ -145,18 +161,15 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
      * @return context with cLabs
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
-    private IContext buildCLabs(IContext context, Set<String> unrecognizedWords) throws ContextPreprocessorException {
-        int counter = 0;
-        int total = context.getRoot().getDescendantCount() + 1;
-        int reportInt = (total / 20) + 1;//i.e. report every 5%
-
+    protected IContext buildCLabs(IContext context, Set<String> unrecognizedWords) throws ContextPreprocessorException {
         for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+
             processNode(i.next(), unrecognizedWords);
 
-            counter++;
-            if ((SMatchConstants.LARGE_TREE < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-                log.info(100 * counter / total + "%");
-            }
+            progress();
         }
 
         return context;
@@ -181,14 +194,13 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
             boolean isEmpty = true;
             String labelOfNode = node.getNodeData().getName().trim();
 
-            if (debugLabels) {
-                log.debug("preprocessing: " + labelOfNode);
-            }
+            log.trace("preprocessing: " + labelOfNode);
 
             labelOfNode = replacePunctuation(labelOfNode);
             labelOfNode = labelOfNode.toLowerCase();
             List<ISense> wnSense = new ArrayList<>();
-            if (!(("top".equals(labelOfNode) || "thing".equals(labelOfNode)) && !node.hasParent()) && (!meaninglessWords.contains(labelOfNode + " ")) && (isTokenMeaningful(labelOfNode))) {
+            if (!(("top".equals(labelOfNode) || "thing".equals(labelOfNode)) && !node.hasParent())
+                    && (!meaninglessWords.contains(labelOfNode + " ")) && (isTokenMeaningful(labelOfNode))) {
                 wnSense = linguisticOracle.getSenses(labelOfNode);
             }
 
@@ -237,13 +249,13 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
                         // add to list of processed tokens
                         tokensOfNodeLabel.add(token);
                         // if not logical connective
-                        if ((!andWords.contains(token)) && ((orWords.indexOf(token)) == -1)
-                                && ((notWords.indexOf(token)) == -1) && (!isNumber(token))) {
+                        if (!andWords.contains(token) && !orWords.contains(token)
+                                && !notWords.contains(token) && !hasNumber(token)) {
                             // get WN senses for token
                             if (!(("top".equals(token) || "thing".equals(token)) && !node.hasParent())) {
                                 wnSense = linguisticOracle.getSenses(token);
                             } else {
-                                wnSense = new ArrayList<>();
+                                wnSense = Collections.emptyList();
                             }
                             if (0 == wnSense.size()) {
                                 List<String> newTokens = complexWordsRecognition(token);
@@ -285,7 +297,7 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
             }
 
             if (isEmpty) {
-                String token = labelOfNode.replaceAll(" ", "_");
+                String token = labelOfNode.replace(' ', '_');
                 // add to list of processed labels
                 tokensOfNodeLabel.add(token);
                 // create atomic node of label
@@ -322,7 +334,7 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
     }
 
     /**
-     * Finds out if the input token is a complex word or not using WordNet. Tries to insert spaces and dash
+     * Finds out if the input token is a complex word or not using WordNet. Tries to insert space and dash
      * between all characters and searches for the result to be in WordNet.
      *
      * @param token token
@@ -415,9 +427,9 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
                 if (vec != null && vec.size() > 0) {
                     // construct formula
                     if (connective.isEmpty()) {
-                        formulaOfConcept.append(" | ").append(bracket).append(encloseWithParentheses(vec));
+                        appendConjunction(formulaOfConcept.append(" | ").append(bracket), vec);
                     } else {
-                        formulaOfConcept.append(connective).append(bracket).append(encloseWithParentheses(vec));
+                        appendConjunction(formulaOfConcept.append(connective).append(bracket), vec);
                     }
                     insert = true;
                     connective = "";
@@ -442,7 +454,7 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
                 // If logical not
             } else if (notWords.contains(" " + token + " ")) {
                 if (vec != null && vec.size() > 0) {
-                    formulaOfConcept.append(connective).append(encloseWithParentheses(vec));
+                    appendConjunction(formulaOfConcept.append(connective), vec);
                     vec = new ArrayList<>();
                     connective = "";
                 }
@@ -463,9 +475,9 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
         if (vec != null && vec.size() > 0) {
             //construct formula
             if (connective.contains("&") || connective.contains("|") || connective.equals(" ")) {
-                formulaOfConcept.append(connective).append(bracket).append(encloseWithParentheses(vec));
+                appendConjunction(formulaOfConcept.append(connective).append(bracket), vec);
             } else {
-                formulaOfConcept.append(" & ").append(encloseWithParentheses(vec));
+                appendConjunction(formulaOfConcept.append(" & "), vec);
             }
             connective = "";
         } else {
@@ -480,9 +492,6 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
         }
         // dealing with brackets
         String foc = formulaOfConcept.toString();
-        foc = foc.replace('[', '(');
-        foc = foc.replace(']', ')');
-        foc = foc.replaceAll(", ", " & ");
         foc = foc.trim();
         if (foc.startsWith("&")) {
             StringTokenizer atoms = new StringTokenizer(foc, "&");
@@ -571,8 +580,12 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
      * @return context with multiwords
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
-    private IContext findMultiwordsInContextStructure(IContext context) throws ContextPreprocessorException {
+    protected IContext findMultiwordsInContextStructure(IContext context) throws ContextPreprocessorException {
         for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+
             INode sourceNode = i.next();
             // sense disambiguation within the context structure
             // for all ACoLs in the source node
@@ -582,11 +595,13 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
                 findMultiwordsAmong(sourceNode.getDescendants(), synSource);
                 findMultiwordsAmong(sourceNode.getAncestors(), synSource);
             }
+
+            progress();
         }
         return context;
     }
 
-    private void findMultiwordsAmong(Iterator<INode> i, IAtomicConceptOfLabel synSource) throws ContextPreprocessorException {
+    protected void findMultiwordsAmong(Iterator<INode> i, IAtomicConceptOfLabel synSource) throws ContextPreprocessorException {
         while (i.hasNext()) {
             INode targetNode = i.next();
             for (Iterator<IAtomicConceptOfLabel> k = targetNode.getNodeData().getACoLs(); k.hasNext(); ) {
@@ -605,59 +620,73 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
      * - filtering within context
      *
      * @param context context to perform sense filtering
-     * @throws SenseMatcherException SenseMatcherException
+     * @throws ContextPreprocessorException ContextPreprocessorException
      */
-    private void senseFiltering(IContext context) throws SenseMatcherException {
+    protected void senseFiltering(IContext context) throws ContextPreprocessorException {
         HashMap<IAtomicConceptOfLabel, List<ISense>> refinedSenses = new HashMap<>();
 
-        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
-            INode sourceNode = i.next();
-            // if node is complex
-            if (1 < sourceNode.getNodeData().getACoLCount()) {
-                // for each ACoL in the node
-                for (Iterator<IAtomicConceptOfLabel> j = sourceNode.getNodeData().getACoLs(); j.hasNext(); ) {
-                    IAtomicConceptOfLabel sourceACoL = j.next();
-                    // compare with all the other ACoLs in the node
-                    for (Iterator<IAtomicConceptOfLabel> k = sourceNode.getNodeData().getACoLs(); k.hasNext(); ) {
-                        IAtomicConceptOfLabel targetACoL = k.next();
-                        if (!targetACoL.equals(sourceACoL)) {
-                            // for each sense in source ACoL
-                            for (Iterator<ISense> s = sourceACoL.getSenses(); s.hasNext(); ) {
-                                ISense sourceSense = s.next();
-                                // for each sense in target ACoL
-                                for (Iterator<ISense> t = targetACoL.getSenses(); t.hasNext(); ) {
-                                    ISense targetSense = t.next();
-                                    if (senseMatcher.isSourceSynonymTarget(sourceSense, targetSense) ||
-                                            senseMatcher.isSourceLessGeneralThanTarget(sourceSense, targetSense) ||
-                                            senseMatcher.isSourceMoreGeneralThanTarget(sourceSense, targetSense)) {
-                                        addToRefinedSenses(refinedSenses, sourceACoL, sourceSense);
-                                        addToRefinedSenses(refinedSenses, targetACoL, targetSense);
+        try {
+            for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
+
+                INode sourceNode = i.next();
+                // if node is complex
+                if (1 < sourceNode.getNodeData().getACoLCount()) {
+                    // for each ACoL in the node
+                    for (Iterator<IAtomicConceptOfLabel> j = sourceNode.getNodeData().getACoLs(); j.hasNext(); ) {
+                        IAtomicConceptOfLabel sourceACoL = j.next();
+                        // compare with all the other ACoLs in the node
+                        for (Iterator<IAtomicConceptOfLabel> k = sourceNode.getNodeData().getACoLs(); k.hasNext(); ) {
+                            IAtomicConceptOfLabel targetACoL = k.next();
+                            if (!targetACoL.equals(sourceACoL)) {
+                                // for each sense in source ACoL
+                                for (Iterator<ISense> s = sourceACoL.getSenses(); s.hasNext(); ) {
+                                    ISense sourceSense = s.next();
+                                    // for each sense in target ACoL
+                                    for (Iterator<ISense> t = targetACoL.getSenses(); t.hasNext(); ) {
+                                        ISense targetSense = t.next();
+                                        if (senseMatcher.isSourceSynonymTarget(sourceSense, targetSense) ||
+                                                senseMatcher.isSourceLessGeneralThanTarget(sourceSense, targetSense) ||
+                                                senseMatcher.isSourceMoreGeneralThanTarget(sourceSense, targetSense)) {
+                                            addToRefinedSenses(refinedSenses, sourceACoL, sourceSense);
+                                            addToRefinedSenses(refinedSenses, targetACoL, targetSense);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
-            // sense disambiguation within the context structure
-            // for all ACoLs in the source node
-            for (Iterator<IAtomicConceptOfLabel> j = sourceNode.getNodeData().getACoLs(); j.hasNext(); ) {
-                IAtomicConceptOfLabel sourceACoL = j.next();
-                if (!refinedSenses.containsKey(sourceACoL)) {
-                    for (Iterator<ISense> s = sourceACoL.getSenses(); s.hasNext(); ) {
-                        ISense sourceSense = s.next();
-                        // for all target nodes (ancestors and descendants)
-                        senseFilteringAmong(sourceNode.getDescendants(), sourceSense, sourceACoL, refinedSenses);
-                        senseFilteringAmong(sourceNode.getAncestors(), sourceSense, sourceACoL, refinedSenses);
+                // sense disambiguation within the context structure
+                // for all ACoLs in the source node
+                for (Iterator<IAtomicConceptOfLabel> j = sourceNode.getNodeData().getACoLs(); j.hasNext(); ) {
+                    IAtomicConceptOfLabel sourceACoL = j.next();
+                    if (!refinedSenses.containsKey(sourceACoL)) {
+                        for (Iterator<ISense> s = sourceACoL.getSenses(); s.hasNext(); ) {
+                            ISense sourceSense = s.next();
+                            // for all target nodes (ancestors and descendants)
+                            senseFilteringAmong(sourceNode.getDescendants(), sourceSense, sourceACoL, refinedSenses);
+                            senseFilteringAmong(sourceNode.getAncestors(), sourceSense, sourceACoL, refinedSenses);
+                        }
                     }
                 }
+
+                progress();
             }
+        } catch (SenseMatcherException e) {
+            throw new ContextPreprocessorException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
 
         // Loop on senses of the all concepts and assign to them
-        // senses mark as refined on the previous step
+        // senses marked as refined on the previous step
         // If there are no refined senses save the original ones
         for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+
             for (Iterator<IAtomicConceptOfLabel> j = i.next().getNodeData().getACoLs(); j.hasNext(); ) {
                 IAtomicConceptOfLabel acol = j.next();
                 List<ISense> refined = refinedSenses.get(acol);
@@ -670,10 +699,12 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
                     }
                 }
             }
+
+            progress();
         }
     }
 
-    private void addToRefinedSenses(HashMap<IAtomicConceptOfLabel, List<ISense>> refinedSenses, IAtomicConceptOfLabel acol, ISense sense) {
+    protected void addToRefinedSenses(Map<IAtomicConceptOfLabel, List<ISense>> refinedSenses, IAtomicConceptOfLabel acol, ISense sense) {
         List<ISense> senses = refinedSenses.get(acol);
         if (null == senses) {
             senses = new ArrayList<>();
@@ -682,40 +713,46 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
         refinedSenses.put(acol, senses);
     }
 
-    private void senseFilteringAmong(Iterator<INode> i, ISense sourceSense, IAtomicConceptOfLabel sourceACoL, HashMap<IAtomicConceptOfLabel, List<ISense>> refinedSenses) throws SenseMatcherException {
-        while (i.hasNext()) {
-            INode targetNode = i.next();
-            for (Iterator<IAtomicConceptOfLabel> k = targetNode.getNodeData().getACoLs(); k.hasNext(); ) {
-                IAtomicConceptOfLabel targetACoL = k.next();
-                if (null == refinedSenses.get(targetACoL)) {
-                    for (Iterator<ISense> t = targetACoL.getSenses(); t.hasNext(); ) {
-                        ISense targetSense = t.next();
-                        // Check whether each sense not synonym or more general, less general then the senses of
-                        // the ancestors and descendants of the node in context hierarchy
-                        if ((senseMatcher.isSourceSynonymTarget(sourceSense, targetSense)) ||
-                                (senseMatcher.isSourceLessGeneralThanTarget(sourceSense, targetSense)) ||
-                                (senseMatcher.isSourceMoreGeneralThanTarget(sourceSense, targetSense))) {
-                            addToRefinedSenses(refinedSenses, sourceACoL, sourceSense);
-                            addToRefinedSenses(refinedSenses, targetACoL, targetSense);
+    protected void senseFilteringAmong(Iterator<INode> i, ISense sourceSense, IAtomicConceptOfLabel sourceACoL,
+                                       Map<IAtomicConceptOfLabel, List<ISense>> refinedSenses) throws ContextPreprocessorException {
+        try {
+            while (i.hasNext()) {
+                INode targetNode = i.next();
+                for (Iterator<IAtomicConceptOfLabel> k = targetNode.getNodeData().getACoLs(); k.hasNext(); ) {
+                    IAtomicConceptOfLabel targetACoL = k.next();
+                    if (null == refinedSenses.get(targetACoL)) {
+                        for (Iterator<ISense> t = targetACoL.getSenses(); t.hasNext(); ) {
+                            ISense targetSense = t.next();
+                            // Check whether each sense not synonym or more general, less general then the senses of
+                            // the ancestors and descendants of the node in context hierarchy
+                            if ((senseMatcher.isSourceSynonymTarget(sourceSense, targetSense)) ||
+                                    (senseMatcher.isSourceLessGeneralThanTarget(sourceSense, targetSense)) ||
+                                    (senseMatcher.isSourceMoreGeneralThanTarget(sourceSense, targetSense))) {
+                                addToRefinedSenses(refinedSenses, sourceACoL, sourceSense);
+                                addToRefinedSenses(refinedSenses, targetACoL, targetSense);
+                            }
                         }
                     }
                 }
             }
+        } catch (SenseMatcherException e) {
+            throw new ContextPreprocessorException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 
     /**
      * Checks whether input string contains a number or not.
      *
-     * @param in1 input string
-     * @return false if it contains a number
+     * @param input input string
+     * @return true if it contains a number
      */
-    private boolean isNumber(String in1) {
-        //noinspection LoopStatementThatDoesntLoop
-        for (StringTokenizer stringTokenizer = new StringTokenizer(in1, numberCharacters); stringTokenizer.hasMoreTokens(); ) {
-            return false;
+    private boolean hasNumber(String input) {
+        for (int i = 0; i < numberCharacters.length(); i++) {
+            if (-1 < input.indexOf(numberCharacters.charAt(i))) {
+                return true;
+            }
         }
-        return true;
+        return false;
     }
 
     /**
@@ -878,30 +915,13 @@ public class DefaultContextPreprocessor implements IContextPreprocessor {
         return tmp;
     }
 
-    /**
-     * Encloses list elements with parenthesis in such a way that operation is always binary.
-     * This is a workaround for AIMA limitation.
-     * <p/>
-     * [n1.0] becomes [n1.0]
-     * [n1.0, n2.0] becomes [n1.0, n2.0]
-     * [n1.0, n2.0, n3.0] becomes [[n1.0], [n2.0, n3.0]]
-     * [n1.0, n2.0, n3.0, n4.0] becomes [[n1.0, n2.0], [n3.0, n4.0]]
-     * [n1.0, n2.0, n3.0, n4.0, n5.0] becomes [[n1.0, n2.0], [[n3.0], [n4.0, n5.0]]]
-     *
-     * @param vec vector of propositional logic items (maximum five elements)
-     * @return the same formula of the input logic items with brackets
-     */
-    public static String encloseWithParentheses(List<String> vec) {
-        if (vec.size() == 1) {
-            return "[" + vec.get(0) + "]";
-        } else if (vec.size() == 2) {
-            return "[" + vec.get(0) + ", " + vec.get(1) + "]";
-        } else {
-            return "["
-                    + encloseWithParentheses(vec.subList(0, (vec.size() / 2)))
-                    + ", "
-                    + encloseWithParentheses(vec.subList((vec.size() / 2), vec.size()))
-                    + "]";
+    private static void appendConjunction(StringBuilder b, List<String> vec) {
+        for (int i = 0; i < vec.size(); i++) {
+            if (i < (vec.size() - 1)) {
+                b.append(vec.get(i)).append(" & ");
+            } else {
+                b.append(vec.get(i));
+            }
         }
     }
 }

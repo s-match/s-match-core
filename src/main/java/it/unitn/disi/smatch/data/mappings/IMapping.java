@@ -1,6 +1,5 @@
 package it.unitn.disi.smatch.data.mappings;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,7 +48,7 @@ public interface IMapping<T> extends Set<IMappingElement<T>> {
      * @param source source element
      * @return mapping elements with source element equal to <code>source</code>
      */
-    List<IMappingElement<T>> getSources(T source);
+    Set<IMappingElement<T>> getSources(T source);
 
     /**
      * Returns mapping elements with target element equal to <code>target</code>.
@@ -57,5 +56,5 @@ public interface IMapping<T> extends Set<IMappingElement<T>> {
      * @param target target element
      * @return mapping elements with target element equal to <code>target</code>
      */
-    List<IMappingElement<T>> getTargets(T target);
+    Set<IMappingElement<T>> getTargets(T target);
 }

@@ -1,9 +1,9 @@
 package it.unitn.disi.smatch.renderers.mapping;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.trees.INode;
-import it.unitn.disi.smatch.data.util.MappingProgressContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +19,21 @@ public class RelationSortingPlainMappingRenderer extends PlainMappingRenderer {
 
     private static final Logger log = LoggerFactory.getLogger(RelationSortingPlainMappingRenderer.class);
 
+    public RelationSortingPlainMappingRenderer() {
+        super(null, null);
+    }
+
+    public RelationSortingPlainMappingRenderer(String location, IContextMapping<INode> mapping) {
+        super(location, mapping);
+    }
+
     @Override
-    protected void process(IContextMapping<INode> mapping, BufferedWriter out, MappingProgressContainer progressContainer) throws IOException {
+    public AsyncTask<Void, IMappingElement<INode>> asyncRender(IContextMapping<INode> mapping, String location) {
+        return new RelationSortingPlainMappingRenderer(location, mapping);
+    }
+
+    @Override
+    protected void process(IContextMapping<INode> mapping, BufferedWriter out) throws IOException {
         char[] relations = {IMappingElement.DISJOINT, IMappingElement.EQUIVALENCE, IMappingElement.LESS_GENERAL, IMappingElement.MORE_GENERAL};
 
         for (char relation : relations) {
@@ -30,6 +43,10 @@ public class RelationSortingPlainMappingRenderer extends PlainMappingRenderer {
             }
 
             for (IMappingElement<INode> mappingElement : mapping) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
+
                 if (mappingElement.getRelation() == relation) {
                     String sourceConceptName = getNodePathToRoot(mappingElement.getSource());
                     String targetConceptName = getNodePathToRoot(mappingElement.getTarget());
@@ -37,8 +54,7 @@ public class RelationSortingPlainMappingRenderer extends PlainMappingRenderer {
                     out.write(sourceConceptName + "\t" + relation + "\t" + targetConceptName + "\n");
                     relationsRendered++;
 
-                    progressContainer.countRelation(mappingElement.getRelation());
-                    progressContainer.progress();
+                    progress();
                 }
             }
 

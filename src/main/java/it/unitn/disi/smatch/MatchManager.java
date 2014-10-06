@@ -32,25 +32,25 @@ public class MatchManager implements IMatchManager {
 
     private static final Logger log = LoggerFactory.getLogger(MatchManager.class);
 
-    private final IBaseContextLoader contextLoader;
+    protected final IBaseContextLoader contextLoader;
 
-    private final IBaseContextRenderer contextRenderer;
+    protected final IBaseContextRenderer contextRenderer;
 
-    private final IMappingLoader mappingLoader;
+    protected final IMappingLoader mappingLoader;
 
-    private final IMappingRenderer mappingRenderer;
+    protected final IMappingRenderer mappingRenderer;
 
-    private final IMappingFilter mappingFilter;
+    protected final IMappingFilter mappingFilter;
 
-    private final IMappingFactory mappingFactory;
+    protected final IMappingFactory mappingFactory;
 
-    private final IContextPreprocessor contextPreprocessor;
+    protected final IContextPreprocessor contextPreprocessor;
 
-    private final IContextClassifier contextClassifier;
+    protected final IContextClassifier contextClassifier;
 
-    private final IElementMatcher elementMatcher;
+    protected final IElementMatcher elementMatcher;
 
-    private final ITreeMatcher treeMatcher;
+    protected final ITreeMatcher treeMatcher;
 
     public static IMatchManager getInstanceFromResource(String... paths) {
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext(paths);
@@ -97,9 +97,10 @@ public class MatchManager implements IMatchManager {
             throw new SMatchException("Context loader is not configured.");
         }
 
+        final long start = System.currentTimeMillis();
         log.info("Loading context from: " + location);
         final IBaseContext result = contextLoader.loadContext(location);
-        log.info("Loading context finished");
+        log.info("Loading context finished: " + (System.currentTimeMillis() - start) + " ms");
         return result;
     }
 
@@ -108,13 +109,15 @@ public class MatchManager implements IMatchManager {
     }
 
     @SuppressWarnings("unchecked")
-    public void renderContext(IBaseContext ctxSource, String location) throws SMatchException {
+    public void renderContext(IBaseContext context, String location) throws SMatchException {
         if (null == contextRenderer) {
             throw new SMatchException("Context renderer is not configured.");
         }
+
+        final long start = System.currentTimeMillis();
         log.info("Rendering context to: " + location);
-        contextRenderer.render(ctxSource, location);
-        log.info("Rendering context finished");
+        contextRenderer.render(context, location);
+        log.info("Rendering context finished: " + (System.currentTimeMillis() - start) + " ms");
     }
 
     public IBaseContextRenderer getContextRenderer() {
@@ -125,9 +128,11 @@ public class MatchManager implements IMatchManager {
         if (null == mappingLoader) {
             throw new SMatchException("Mapping loader is not configured.");
         }
+
+        final long start = System.currentTimeMillis();
         log.info("Loading mapping from: " + location);
         final IContextMapping<INode> result = mappingLoader.loadMapping(ctxSource, ctxTarget, location);
-        log.info("Mapping loading finished");
+        log.info("Mapping loading finished: " + (System.currentTimeMillis() - start) + " ms");
         return result;
     }
 
@@ -139,9 +144,11 @@ public class MatchManager implements IMatchManager {
         if (null == mappingRenderer) {
             throw new SMatchException("Mapping renderer is not configured.");
         }
+
+        final long start = System.currentTimeMillis();
         log.info("Rendering mapping to: " + location);
         mappingRenderer.render(mapping, location);
-        log.info("Mapping rendering finished");
+        log.info("Mapping rendering finished: " + (System.currentTimeMillis() - start) + " ms");
     }
 
     public IMappingRenderer getMappingRenderer() {
@@ -152,9 +159,11 @@ public class MatchManager implements IMatchManager {
         if (null == mappingFilter) {
             throw new SMatchException("Mapping filter is not configured.");
         }
+
+        final long start = System.currentTimeMillis();
         log.info("Filtering...");
         final IContextMapping<INode> result = mappingFilter.filter(mapping);
-        log.info("Filtering finished");
+        log.info("Filtering finished: " + (System.currentTimeMillis() - start) + " ms");
         return result;
     }
 
@@ -171,9 +180,10 @@ public class MatchManager implements IMatchManager {
             throw new SMatchException("Target context is not preprocessed.");
         }
 
+        final long start = System.currentTimeMillis();
         log.info("Element level matching...");
         final IContextMapping<IAtomicConceptOfLabel> acolMapping = elementMatcher.elementLevelMatching(sourceContext, targetContext);
-        log.info("Element level matching finished");
+        log.info("Element level matching finished: " + (System.currentTimeMillis() - start) + " ms");
         return acolMapping;
     }
 
@@ -182,36 +192,41 @@ public class MatchManager implements IMatchManager {
         if (null == treeMatcher) {
             throw new SMatchException("Tree matcher is not configured.");
         }
+
+        final long start = System.currentTimeMillis();
         log.info("Structure level matching...");
         IContextMapping<INode> mapping = treeMatcher.treeMatch(sourceContext, targetContext, acolMapping);
-        log.info("Structure level matching finished");
+        log.info("Structure level matching finished: " + (System.currentTimeMillis() - start) + " ms");
         log.info("Returning links: " + mapping.size());
         return mapping;
     }
 
     public void offline(IContext context) throws SMatchException {
-        log.info("Computing concept at label formulas...");
+        long start = System.currentTimeMillis();
+        log.info("Preprocessing...");
         preprocess(context);
-        log.info("Computing concept at label formulas finished");
-
-        log.info("Computing concept at node formulas...");
         classify(context);
-        log.info("Computing concept at node formulas finished");
+        log.info("Preprocessing finished: " + (System.currentTimeMillis() - start) + " ms");
     }
 
     public IContextMapping<INode> online(IContext sourceContext, IContext targetContext) throws SMatchException {
+        long start = System.currentTimeMillis();
+        log.info("Online matching...");
         // Performs element level matching which computes the relation between labels.
         IContextMapping<IAtomicConceptOfLabel> acolMapping = elementLevelMatching(sourceContext, targetContext);
         // Performs structure level matching which computes the relation between nodes.
-        return structureLevelMatching(sourceContext, targetContext, acolMapping);
+        IContextMapping<INode> mapping = structureLevelMatching(sourceContext, targetContext, acolMapping);
+        log.info("Online matching finished: " + (System.currentTimeMillis() - start) + " ms");
+        return mapping;
     }
 
     public IContextMapping<INode> match(IContext sourceContext, IContext targetContext) throws SMatchException {
+        final long start = System.currentTimeMillis();
         log.info("Matching started...");
         offline(sourceContext);
         offline(targetContext);
         IContextMapping<INode> result = online(sourceContext, targetContext);
-        log.info("Matching finished");
+        log.info("Matching finished: " + (System.currentTimeMillis() - start) + " ms");
         return result;
     }
 
@@ -220,9 +235,10 @@ public class MatchManager implements IMatchManager {
             throw new SMatchException("Context preprocessor is not configured.");
         }
 
+        final long start = System.currentTimeMillis();
         log.info("Computing concepts at label...");
         contextPreprocessor.preprocess(context);
-        log.info("Computing concepts at label finished");
+        log.info("Computing concepts at label finished: " + (System.currentTimeMillis() - start) + " ms");
     }
 
     public IContextPreprocessor getContextPreprocessor() {
@@ -233,8 +249,10 @@ public class MatchManager implements IMatchManager {
         if (null == contextClassifier) {
             throw new SMatchException("Context classifier is not configured.");
         }
+
+        final long start = System.currentTimeMillis();
         log.info("Computing concepts at node...");
         contextClassifier.buildCNodeFormulas(context);
-        log.info("Computing concepts at node finished");
+        log.info("Computing concepts at node finished: " + (System.currentTimeMillis() - start) + " ms");
     }
 }

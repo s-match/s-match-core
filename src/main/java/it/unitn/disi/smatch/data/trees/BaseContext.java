@@ -21,47 +21,56 @@ public class BaseContext<E extends IBaseNode> implements IBaseContext<E>, IBaseT
         nodes = null;
     }
 
+    @Override
     public void setRoot(E root) {
         this.root = root;
         root.addTreeStructureChangedListener(this);
     }
 
+    @Override
     public E getRoot() {
         return root;
     }
 
+    @Override
     public boolean hasRoot() {
         return null != root;
     }
 
+    @Override
     public E createNode() {
         return (E) new BaseNode();
     }
 
+    @Override
     public E createNode(String name) {
         return (E) new BaseNode(name);
     }
 
+    @Override
     public E createRoot() {
         root = (E) new BaseNode();
         root.addTreeStructureChangedListener(this);
         return root;
     }
 
+    @Override
     public E createRoot(String name) {
         E result = createRoot();
         result.getNodeData().setName(name);
         return result;
     }
 
+    @Override
     public Iterator<E> getNodes() {
         if (hasRoot()) {
-            return new StartIterator<E>(root, root.getDescendants());
+            return new StartIterator<>(root, root.getDescendants());
         } else {
             return Collections.<E>emptyList().iterator();
         }
     }
 
+    @Override
     public List<E> getNodesList() {
         if (null != nodes) {
             return Collections.unmodifiableList(nodes);
@@ -78,13 +87,17 @@ public class BaseContext<E extends IBaseNode> implements IBaseContext<E>, IBaseT
         }
     }
 
-    public void treeStructureChanged(E node) {
-        nodes = null;
+    @Override
+    public int getNodesCount() {
+        if (null == root) {
+            return 0;
+        } else {
+            return root.getDescendantCount() + 1;
+        }
     }
 
-    public void trim() {
-        if (root instanceof BaseNode) {
-            ((BaseNode) root).trim();
-        }
+    @Override
+    public void treeStructureChanged(E node) {
+        nodes = null;
     }
 }

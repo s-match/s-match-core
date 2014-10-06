@@ -16,7 +16,7 @@ public interface ISenseGlossBasedElementLevelSemanticMatcher {
      * @param source interface of source synset
      * @param target interface of target synset.
      * @return a relation between source and target synsets
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws ElementMatcherException ElementMatcherException
      */
-    char match(ISense source, ISense target) throws MatcherLibraryException;
+    char match(ISense source, ISense target) throws ElementMatcherException;
 }

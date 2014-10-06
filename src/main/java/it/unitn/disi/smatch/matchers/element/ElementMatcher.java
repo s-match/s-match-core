@@ -1,6 +1,6 @@
 package it.unitn.disi.smatch.matchers.element;
 
-import it.unitn.disi.smatch.SMatchConstants;
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
@@ -8,13 +8,11 @@ import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
-import it.unitn.disi.smatch.oracles.ILinguisticOracle;
 import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.oracles.SenseMatcherException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -40,51 +38,86 @@ import java.util.List;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class ElementMatcher implements IElementMatcher {
-
-    private static final Logger log = LoggerFactory.getLogger(ElementMatcher.class);
+public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLabel>, IMappingElement<IAtomicConceptOfLabel>>
+        implements IAsyncElementMatcher {
 
     protected final IMappingFactory mappingFactory;
-    private final ISenseMatcher senseMatcher;
-    private final ILinguisticOracle linguisticOracle;
+    protected final ISenseMatcher senseMatcher;
 
     // exploit only WordNet (false) or use element level semantic matchers (true)
-    private final boolean useWeakSemanticsElementLevelMatchersLibrary;
+    protected final boolean useWeakSemanticsElementLevelMatchersLibrary;
 
     // contains the classes of string matchers (Implementations of IStringBasedElementLevelSemanticMatcher interface)
-    private final List<IStringBasedElementLevelSemanticMatcher> stringMatchers;
+    protected final List<IStringBasedElementLevelSemanticMatcher> stringMatchers;
 
     // contains the classes of sense and gloss based matchers (Implementations of ISenseGlossBasedElementLevelSemanticMatcher interface)
-    private final List<ISenseGlossBasedElementLevelSemanticMatcher> senseGlossMatchers;
+    protected final List<ISenseGlossBasedElementLevelSemanticMatcher> senseGlossMatchers;
 
-    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle) {
+    // for task parameters
+    protected final IContext sourceContext;
+    protected final IContext targetContext;
+
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher) {
         this.mappingFactory = mappingFactory;
         this.senseMatcher = senseMatcher;
-        this.linguisticOracle = linguisticOracle;
 
         useWeakSemanticsElementLevelMatchersLibrary = true;
         stringMatchers = Collections.emptyList();
         senseGlossMatchers = Collections.emptyList();
+
+        this.sourceContext = null;
+        this.targetContext = null;
     }
 
-    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, IContext sourceContext, IContext targetContext) {
+        this.mappingFactory = mappingFactory;
+        this.senseMatcher = senseMatcher;
+
+        useWeakSemanticsElementLevelMatchersLibrary = true;
+        stringMatchers = Collections.emptyList();
+        senseGlossMatchers = Collections.emptyList();
+
+        this.sourceContext = sourceContext;
+        this.targetContext = targetContext;
+
+        // progress by node rather than by acol because task can be created on non-preprocessed contexts...
+        setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+    }
+
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher,
                           boolean useWeakSemanticsElementLevelMatchersLibrary) {
         this.mappingFactory = mappingFactory;
         this.senseMatcher = senseMatcher;
-        this.linguisticOracle = linguisticOracle;
         this.useWeakSemanticsElementLevelMatchersLibrary = useWeakSemanticsElementLevelMatchersLibrary;
 
         stringMatchers = Collections.emptyList();
         senseGlossMatchers = Collections.emptyList();
+
+        this.sourceContext = null;
+        this.targetContext = null;
     }
 
-    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher,
+                          boolean useWeakSemanticsElementLevelMatchersLibrary,
+                          IContext sourceContext, IContext targetContext) {
+        this.mappingFactory = mappingFactory;
+        this.senseMatcher = senseMatcher;
+        this.useWeakSemanticsElementLevelMatchersLibrary = useWeakSemanticsElementLevelMatchersLibrary;
+
+        stringMatchers = Collections.emptyList();
+        senseGlossMatchers = Collections.emptyList();
+
+        this.sourceContext = sourceContext;
+        this.targetContext = targetContext;
+        setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+    }
+
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher,
                           boolean useWeakSemanticsElementLevelMatchersLibrary,
                           List<IStringBasedElementLevelSemanticMatcher> stringMatchers,
                           List<ISenseGlossBasedElementLevelSemanticMatcher> senseGlossMatchers) {
         this.mappingFactory = mappingFactory;
         this.senseMatcher = senseMatcher;
-        this.linguisticOracle = linguisticOracle;
         this.useWeakSemanticsElementLevelMatchersLibrary = useWeakSemanticsElementLevelMatchersLibrary;
         if (null == stringMatchers) {
             this.stringMatchers = Collections.emptyList();
@@ -96,35 +129,89 @@ public class ElementMatcher implements IElementMatcher {
         } else {
             this.senseGlossMatchers = senseGlossMatchers;
         }
+        this.sourceContext = null;
+        this.targetContext = null;
     }
 
-    public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws MatcherLibraryException {
+    public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher,
+                          boolean useWeakSemanticsElementLevelMatchersLibrary,
+                          List<IStringBasedElementLevelSemanticMatcher> stringMatchers,
+                          List<ISenseGlossBasedElementLevelSemanticMatcher> senseGlossMatchers,
+                          IContext sourceContext, IContext targetContext) {
+        this.mappingFactory = mappingFactory;
+        this.senseMatcher = senseMatcher;
+        this.useWeakSemanticsElementLevelMatchersLibrary = useWeakSemanticsElementLevelMatchersLibrary;
+        if (null == stringMatchers) {
+            this.stringMatchers = Collections.emptyList();
+        } else {
+            this.stringMatchers = stringMatchers;
+        }
+        if (null == senseGlossMatchers) {
+            this.senseGlossMatchers = Collections.emptyList();
+        } else {
+            this.senseGlossMatchers = senseGlossMatchers;
+        }
+        this.sourceContext = sourceContext;
+        this.targetContext = targetContext;
+        setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+    }
+
+    public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws ElementMatcherException {
+        if (0 == getTotal()) {
+            setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+        }
         // Calculates relations between all ACoLs in both contexts and produces a mapping between them.
         // Corresponds to Step 3 of the semantic matching algorithm.
 
-        IContextMapping<IAtomicConceptOfLabel> result = mappingFactory.getACoLMappingInstance(sourceContext, targetContext);
+        final IContextMapping<IAtomicConceptOfLabel> result = mappingFactory.getACoLMappingInstance(sourceContext, targetContext);
 
-        long counter = 0;
-        long total = getACoLCount(sourceContext) * getACoLCount(targetContext);
-        long reportInt = (total / 20) + 1;//i.e. report every 5%
-        for (INode sourceNode : sourceContext.getNodesList()) {
-            for (IAtomicConceptOfLabel sourceACoL : sourceNode.getNodeData().getACoLsList()) {
-                for (INode targetNode : targetContext.getNodesList()) {
-                    for (IAtomicConceptOfLabel targetACoL : targetNode.getNodeData().getACoLsList()) {
+        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+            final INode sourceNode = i.next();
+            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+                final INode targetNode = j.next();
+                for (Iterator<IAtomicConceptOfLabel> ii = sourceNode.getNodeData().getACoLs(); ii.hasNext(); ) {
+                    final IAtomicConceptOfLabel sourceACoL = ii.next();
+                    for (Iterator<IAtomicConceptOfLabel> jj = targetNode.getNodeData().getACoLs(); jj.hasNext(); ) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            break;
+                        }
+
+                        final IAtomicConceptOfLabel targetACoL = jj.next();
+
                         //Use Element level semantic matchers library
                         //to check the relation holding between two ACoLs represented by lists of WN senses and tokens
                         final char relation = getRelation(sourceACoL, targetACoL);
                         result.setRelation(sourceACoL, targetACoL, relation);
-
-                        counter++;
-                        if ((SMatchConstants.LARGE_TASK < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-                            log.info(100 * counter / total + "%");
-                        }
                     }
                 }
+
+                // progress by node rather than by acol because task can be created on non-preprocessed contexts...
+                progress();
             }
         }
+
         return result;
+    }
+
+    @Override
+    protected IContextMapping<IAtomicConceptOfLabel> doInBackground() throws Exception {
+        final String threadName = Thread.currentThread().getName();
+        try {
+            Thread.currentThread().setName(Thread.currentThread().getName()
+                    + " [" + this.getClass().getSimpleName()
+                    + ": source.size=" + sourceContext.getNodesCount()
+                    + ", target.size=" + targetContext.getNodesCount() + "]");
+
+            return elementLevelMatching(sourceContext, targetContext);
+        } finally {
+            Thread.currentThread().setName(threadName);
+        }
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<IAtomicConceptOfLabel>, IMappingElement<IAtomicConceptOfLabel>> asyncElementLevelMatching(IContext sourceContext, IContext targetContext) {
+        return new ElementMatcher(mappingFactory, senseMatcher, useWeakSemanticsElementLevelMatchersLibrary,
+                stringMatchers, senseGlossMatchers, sourceContext, targetContext);
     }
 
     /**
@@ -133,9 +220,9 @@ public class ElementMatcher implements IElementMatcher {
      * @param sourceACoL source concept
      * @param targetACoL target concept
      * @return relation between concepts
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws ElementMatcherException ElementMatcherException
      */
-    protected char getRelation(IAtomicConceptOfLabel sourceACoL, IAtomicConceptOfLabel targetACoL) throws MatcherLibraryException {
+    protected char getRelation(IAtomicConceptOfLabel sourceACoL, IAtomicConceptOfLabel targetACoL) throws ElementMatcherException {
         try {
             char relation = senseMatcher.getRelation(sourceACoL.getSenseList(), targetACoL.getSenseList());
 
@@ -154,7 +241,7 @@ public class ElementMatcher implements IElementMatcher {
 
             return relation;
         } catch (SenseMatcherException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 
@@ -181,9 +268,9 @@ public class ElementMatcher implements IElementMatcher {
      * @param sourceSenses source senses
      * @param targetSenses target senses
      * @return semantic relation between two sets of senses
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws ElementMatcherException ElementMatcherException
      */
-    private char getRelationFromSenseGlossMatchers(List<ISense> sourceSenses, List<ISense> targetSenses) throws MatcherLibraryException {
+    private char getRelationFromSenseGlossMatchers(List<ISense> sourceSenses, List<ISense> targetSenses) throws ElementMatcherException {
         char relation = IMappingElement.IDK;
         if (0 < senseGlossMatchers.size()) {
             for (ISense sourceSense : sourceSenses) {
@@ -200,13 +287,4 @@ public class ElementMatcher implements IElementMatcher {
         }
         return relation;
     }
-
-    protected long getACoLCount(IContext context) {
-        long result = 0;
-        for (INode node : context.getNodesList()) {
-            result = result + node.getNodeData().getACoLCount();
-        }
-        return result;
-    }
-
 }

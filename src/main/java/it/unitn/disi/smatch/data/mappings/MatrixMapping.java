@@ -8,6 +8,7 @@ import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages a mapping using a matrix. Needs a configuration key matchMatrixFactory with a class implementing
@@ -19,14 +20,14 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
 
     protected final IMatchMatrixFactory factory;
 
-    protected IMatchMatrix matrix;
+    protected final IMatchMatrix matrix;
 
-    // for set size();
-    private int elementCount;
+    private final AtomicInteger elementCount;
 
-    private T[] sources;
-    private T[] targets;
+    private final T[] sources;
+    private final T[] targets;
 
+    // for iterator
     private volatile transient int modCount;
 
     private class MatrixMappingIterator implements Iterator<IMappingElement<T>> {
@@ -96,20 +97,39 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
         }
     }
 
+    /**
+     * Constructor for mapping factory.
+     *
+     * @param factory matrix factory
+     */
     public MatrixMapping(IMatchMatrixFactory factory) {
         this.factory = factory;
+        if (null == factory) {
+            throw new IllegalArgumentException("factory is required!");
+        }
+        this.matrix = null;
+        this.elementCount = null;
+        this.sources = null;
+        this.targets = null;
     }
 
+    /**
+     * Constructor for mapping instance.
+     *
+     * @param factory       matrix factory
+     * @param sourceContext source context
+     * @param targetContext target context
+     */
     @SuppressWarnings("unchecked")
     public MatrixMapping(IMatchMatrixFactory factory, IContext sourceContext, IContext targetContext) {
-        this.sourceContext = sourceContext;
-        this.targetContext = targetContext;
-        this.factory = factory;
-        matrix = factory.getInstance();
+        super(sourceContext, targetContext);
+
         // counts and indexes them
-        int rows = getRowCount(sourceContext);
-        int cols = getColCount(targetContext);
-        matrix.init(rows, cols);
+        int rows = indexSource(sourceContext);
+        int cols = indexTarget(targetContext);
+
+        this.matrix = factory.getInstance(rows, cols);
+        this.factory = factory;
 
         sources = (T[]) new IIndexedObject[rows];
         targets = (T[]) new IIndexedObject[cols];
@@ -117,7 +137,7 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
         initRows(sourceContext, sources);
         initCols(targetContext, targets);
 
-        elementCount = 0;
+        this.elementCount = new AtomicInteger(0);
         modCount = 0;
     }
 
@@ -129,11 +149,13 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
         // void
     }
 
-    public char getRelation(T source, T target) {
+    @Override
+    public char getRelation(IIndexedObject source, IIndexedObject target) {
         return matrix.get(source.getIndex(), target.getIndex());
     }
 
-    public boolean setRelation(final T source, final T target, final char relation) {
+    @Override
+    public boolean setRelation(final IIndexedObject source, final IIndexedObject target, final char relation) {
         final boolean result =
                 source == sources[source.getIndex()] &&
                         target == targets[target.getIndex()] &&
@@ -144,66 +166,70 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
                 modCount++;
                 matrix.set(source.getIndex(), target.getIndex(), relation);
                 if (IMappingElement.IDK == relation) {
-                    elementCount--;
+                    elementCount.decrementAndGet();
                 } else {
-                    elementCount++;
+                    elementCount.incrementAndGet();
                 }
+            } else {
+                throw new IllegalStateException("mapping is not initialized correctly!");
             }
         }
 
         return !result;
     }
 
-    public List<IMappingElement<T>> getSources(final T source) {
+    @Override
+    public Set<IMappingElement<T>> getSources(final T source) {
         final int sIdx = source.getIndex();
+        Set<IMappingElement<T>> result = Collections.emptySet();
         if (0 <= sIdx && sIdx < sources.length && (source == sources[sIdx])) {
-            ArrayList<IMappingElement<T>> result = new ArrayList<>();
+            result = new HashSet<>();
             for (int j = 0; j < targets.length; j++) {
                 char rel = matrix.get(sIdx, j);
                 if (IMappingElement.IDK != rel) {
                     result.add(new MappingElement<>(sources[sIdx], targets[j], rel));
                 }
             }
-            return result;
-        } else {
-            return Collections.emptyList();
+
         }
+        return result;
     }
 
-    public List<IMappingElement<T>> getTargets(T target) {
+    @Override
+    public Set<IMappingElement<T>> getTargets(T target) {
         final int tIdx = target.getIndex();
+        Set<IMappingElement<T>> result = Collections.emptySet();
         if (0 <= tIdx && tIdx < targets.length && (target == targets[tIdx])) {
-            ArrayList<IMappingElement<T>> result = new ArrayList<>();
+            result = new HashSet<>();
             for (int i = 0; i < sources.length; i++) {
                 char rel = matrix.get(i, tIdx);
                 if (IMappingElement.IDK != rel) {
                     result.add(new MappingElement<>(sources[i], targets[tIdx], rel));
                 }
             }
-            return result;
-        } else {
-            return Collections.emptyList();
         }
+        return result;
     }
 
+    @Override
     public int size() {
-        return elementCount;
+        return elementCount.get();
     }
 
+    @Override
     public boolean isEmpty() {
-        return 0 == elementCount;
+        return 0 == elementCount.get();
     }
 
+    @Override
     public boolean contains(Object o) {
         boolean result = false;
         if (o instanceof IMappingElement) {
             final IMappingElement e = (IMappingElement) o;
             if (e.getSource() instanceof IIndexedObject) {
-                @SuppressWarnings("unchecked")
-                final T s = (T) e.getSource();
+                final IIndexedObject s = (IIndexedObject) e.getSource();
                 if (e.getTarget() instanceof IIndexedObject) {
-                    @SuppressWarnings("unchecked")
-                    final T t = (T) e.getTarget();
+                    final IIndexedObject t = (IIndexedObject) e.getTarget();
                     result = IMappingElement.IDK != getRelation(s, t) && s == sources[s.getIndex()] && t == targets[t.getIndex()];
                 }
             }
@@ -211,24 +237,25 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
         return result;
     }
 
+    @Override
     public Iterator<IMappingElement<T>> iterator() {
         return new MatrixMappingIterator();
     }
 
+    @Override
     public boolean add(IMappingElement<T> e) {
         return setRelation(e.getSource(), e.getTarget(), e.getRelation());
     }
 
+    @Override
     public boolean remove(Object o) {
         boolean result = false;
         if (o instanceof IMappingElement) {
             IMappingElement e = (IMappingElement) o;
             if (e.getSource() instanceof IIndexedObject) {
-                @SuppressWarnings("unchecked")
-                T s = (T) e.getSource();
+                final IIndexedObject s = (IIndexedObject) e.getSource();
                 if (e.getTarget() instanceof IIndexedObject) {
-                    @SuppressWarnings("unchecked")
-                    T t = (T) e.getTarget();
+                    final IIndexedObject t = (IIndexedObject) e.getTarget();
                     result = setRelation(s, t, IMappingElement.IDK);
                 }
             }
@@ -237,27 +264,26 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
         return result;
     }
 
+    @Override
     public void clear() {
-        final int rows = matrix.getX();
-        final int cols = matrix.getY();
-        matrix.init(rows, cols);
-
-        elementCount = 0;
+        throw new UnsupportedOperationException();
     }
 
+    @Override
     public IContextMapping<INode> getContextMappingInstance(IContext source, IContext target) {
         return new NodesMatrixMapping(factory, source, target);
     }
 
+    @Override
     public IContextMapping<IAtomicConceptOfLabel> getACoLMappingInstance(IContext source, IContext target) {
         return new ACoLMatrixMapping(factory, source, target);
     }
 
-    protected int getColCount(IContext c) {
+    protected int indexTarget(IContext c) {
         return -1;
     }
 
-    protected int getRowCount(IContext c) {
+    protected int indexSource(IContext c) {
         return -1;
     }
 }

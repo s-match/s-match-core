@@ -1,6 +1,6 @@
 package it.unitn.disi.smatch.filters;
 
-import it.unitn.disi.smatch.SMatchConstants;
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
@@ -15,7 +15,7 @@ import java.util.Random;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class RandomSampleMappingFilter extends BaseFilter implements IMappingFilter {
+public class RandomSampleMappingFilter extends BaseFilter implements IMappingFilter, IAsyncMappingFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RandomSampleMappingFilter.class);
 
@@ -26,17 +26,14 @@ public class RandomSampleMappingFilter extends BaseFilter implements IMappingFil
         this.sampleSize = sampleSize;
     }
 
-    public IContextMapping<INode> filter(IContextMapping<INode> mapping) {
-        if (log.isInfoEnabled()) {
-            log.info("Filtering started...");
-        }
-        long start = System.currentTimeMillis();
+    public RandomSampleMappingFilter(IMappingFactory mappingFactory, IContextMapping<INode> mapping, int sampleSize) {
+        super(mappingFactory, mapping);
+        this.sampleSize = sampleSize;
+    }
 
+    @Override
+    protected IContextMapping<INode> process(IContextMapping<INode> mapping) {
         IContextMapping<INode> result = mappingFactory.getContextMappingInstance(mapping.getSourceContext(), mapping.getTargetContext());
-
-        long counter = 0;
-        long total = mapping.size();
-        long reportInt = (total / 20) + 1;//i.e. report every 5%
 
         //sampling
         int oneIn = (mapping.size() / sampleSize) - (mapping.size() / (10 * sampleSize));
@@ -45,19 +42,20 @@ public class RandomSampleMappingFilter extends BaseFilter implements IMappingFil
             log.info("Sampling...");
         }
         for (IMappingElement<INode> e : mapping) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
             if (0 == r.nextInt(oneIn) && result.size() < sampleSize) {
                 result.add(e);
             }
 
-            counter++;
-            if ((SMatchConstants.LARGE_TASK < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-                log.info(100 * counter / total + "%");
-            }
-        }
-
-        if (log.isInfoEnabled()) {
-            log.info("Filtering finished: " + (System.currentTimeMillis() - start) + " ms");
+            progress();
         }
         return result;
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>> asyncFilter(IContextMapping<INode> mapping) {
+        return new RandomSampleMappingFilter(mappingFactory, mapping, sampleSize);
     }
 }

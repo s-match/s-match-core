@@ -1,5 +1,6 @@
 package it.unitn.disi.smatch.filters;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
@@ -24,9 +25,18 @@ public class RedundantMappingFilterEQ extends RedundantMappingFilter {
         super(mappingFactory);
     }
 
+    public RedundantMappingFilterEQ(IMappingFactory mappingFactory, IContextMapping<INode> mapping) {
+        super(mappingFactory, mapping);
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>> asyncFilter(IContextMapping<INode> mapping) {
+        return new RedundantMappingFilterEQ(mappingFactory, mapping);
+    }
+
     // because in filtering we do not "discover" links
     // we need to check ancestors and descendants, and not only parents and children
-    // otherwise, in case of series of redundant links we remove first by checking parent
+    // otherwise, in case of series of redundant links we remove the first one by checking parent
     // and then all the rest is not removed because of the "gap"
 
     protected boolean verifyCondition1(IContextMapping<INode> mapping, IMappingElement<INode> e) {

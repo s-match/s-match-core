@@ -1,10 +1,10 @@
 package it.unitn.disi.smatch.renderers.context;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.trees.IBaseContext;
 import it.unitn.disi.smatch.data.trees.IBaseNode;
 import it.unitn.disi.smatch.data.trees.IBaseNodeData;
 import it.unitn.disi.smatch.data.trees.Node;
-import it.unitn.disi.smatch.data.util.ProgressContainer;
 import it.unitn.disi.smatch.loaders.ILoader;
 
 import java.io.BufferedWriter;
@@ -18,7 +18,7 @@ import java.util.Iterator;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext<IBaseNode<IBaseNode, IBaseNodeData>>> {
+public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext<IBaseNode>, IBaseNode> implements IAsyncBaseContextRenderer<IBaseContext<IBaseNode>, IBaseNode> {
 
     public TabPathContextRenderer() {
         super();
@@ -28,17 +28,26 @@ public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext
         super(sort);
     }
 
+    public TabPathContextRenderer(String location, IBaseContext<IBaseNode> context) {
+        super(location, context);
+    }
+
+    public TabPathContextRenderer(String location, IBaseContext<IBaseNode> context, boolean sort) {
+        super(location, context, sort);
+    }
+
     @SuppressWarnings({"unchecked"})
-    protected void process(IBaseContext<IBaseNode<IBaseNode, IBaseNodeData>> context, BufferedWriter out, ProgressContainer progressContainer) throws IOException, ContextRendererException {
+    protected void process(IBaseContext<IBaseNode> context, BufferedWriter out) throws IOException, ContextRendererException {
         ArrayList<IBaseNode<IBaseNode, IBaseNodeData>> nodeQ = new ArrayList<>();
         nodeQ.add(context.getRoot());
         IBaseNode<IBaseNode, IBaseNodeData> curNode;
-        while (!nodeQ.isEmpty()) {
+        while (!nodeQ.isEmpty() &&
+                !Thread.currentThread().isInterrupted()) {
             curNode = nodeQ.remove(0);
             if (0 == curNode.getChildCount()) {
                 out.write(getPathToRoot(curNode));
             }
-            progressContainer.progress();
+            progress();
             if (curNode.getChildCount() > 0) {
                 Iterator<IBaseNode> children;
                 if (sort) {
@@ -53,7 +62,6 @@ public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext
                 }
             }
         }
-        reportStats(context);
     }
 
     private String getPathToRoot(IBaseNode node) {
@@ -69,5 +77,10 @@ public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext
 
     public String getDescription() {
         return ILoader.TXT_FILES;
+    }
+
+    @Override
+    public AsyncTask<Void, IBaseNode> asyncRender(IBaseContext<IBaseNode> context, String location) {
+        return new TabPathContextRenderer(location, context, sort);
     }
 }

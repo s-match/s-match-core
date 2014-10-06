@@ -2,7 +2,7 @@ package it.unitn.disi.smatch.matchers.element.gloss;
 
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
-import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
+import it.unitn.disi.smatch.matchers.element.ElementMatcherException;
 import it.unitn.disi.smatch.oracles.ILinguisticOracle;
 import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.oracles.LinguisticOracleException;
@@ -39,9 +39,9 @@ public abstract class BaseGlossMatcher {
      * @param source sense of source
      * @param target sense of target
      * @return true if the source is more general than target
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws it.unitn.disi.smatch.matchers.element.ElementMatcherException ElementMatcherException
      */
-    public boolean isWordMoreGeneral(String source, String target) throws MatcherLibraryException {
+    public boolean isWordMoreGeneral(String source, String target) throws ElementMatcherException {
         try {
             List<ISense> sSenses = linguisticOracle.getSenses(source);
             List<ISense> tSenses = linguisticOracle.getSenses(target);
@@ -53,7 +53,7 @@ public abstract class BaseGlossMatcher {
             }
             return false;
         } catch (LinguisticOracleException | SenseMatcherException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 
@@ -63,9 +63,9 @@ public abstract class BaseGlossMatcher {
      * @param source sense of source
      * @param target sense of target
      * @return true if the source is less general than target
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws it.unitn.disi.smatch.matchers.element.ElementMatcherException ElementMatcherException
      */
-    public boolean isWordLessGeneral(String source, String target) throws MatcherLibraryException {
+    public boolean isWordLessGeneral(String source, String target) throws ElementMatcherException {
         try {
             List<ISense> sSenses = linguisticOracle.getSenses(source);
             List<ISense> tSenses = linguisticOracle.getSenses(target);
@@ -77,7 +77,7 @@ public abstract class BaseGlossMatcher {
             }
             return false;
         } catch (LinguisticOracleException | SenseMatcherException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 
@@ -87,9 +87,9 @@ public abstract class BaseGlossMatcher {
      * @param source sense of source
      * @param target sense of target
      * @return true if they are synonym
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws it.unitn.disi.smatch.matchers.element.ElementMatcherException ElementMatcherException
      */
-    public boolean isWordSynonym(String source, String target) throws MatcherLibraryException {
+    public boolean isWordSynonym(String source, String target) throws ElementMatcherException {
         try {
             List<ISense> sSenses = linguisticOracle.getSenses(source);
             List<ISense> tSenses = linguisticOracle.getSenses(target);
@@ -101,7 +101,7 @@ public abstract class BaseGlossMatcher {
             }
             return false;
         } catch (LinguisticOracleException | SenseMatcherException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 
@@ -111,9 +111,9 @@ public abstract class BaseGlossMatcher {
      * @param source sense of source
      * @param target sense of target
      * @return true if they are in opposite relation
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws it.unitn.disi.smatch.matchers.element.ElementMatcherException ElementMatcherException
      */
-    public boolean isWordOpposite(String source, String target) throws MatcherLibraryException {
+    public boolean isWordOpposite(String source, String target) throws ElementMatcherException {
         try {
             List<ISense> sSenses = linguisticOracle.getSenses(source);
             List<ISense> tSenses = linguisticOracle.getSenses(target);
@@ -125,7 +125,7 @@ public abstract class BaseGlossMatcher {
             }
             return false;
         } catch (LinguisticOracleException | SenseMatcherException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 

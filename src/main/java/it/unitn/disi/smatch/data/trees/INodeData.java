@@ -155,13 +155,22 @@ public interface INodeData extends IBaseNodeData {
 
     /**
      * Returns provenance information.
+     *
      * @return provenance information
      */
     String getProvenance();
 
     /**
      * Sets provenance information.
+     *
      * @param provenance provenance information
      */
     void setProvenance(String provenance);
+
+    /**
+     * All acols along path to root.
+     *
+     * @return all acols along path to root
+     */
+    Iterator<IAtomicConceptOfLabel> pathToRootACoLs();
 }

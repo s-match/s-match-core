@@ -2,8 +2,8 @@ package it.unitn.disi.smatch.matchers.element.gloss;
 
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.matchers.element.ElementMatcherException;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
-import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class WNLemma implements ISenseGlossBasedElementLevelSemanticMatcher {
      * @param target the gloss of target
      * @return synonym or IDk relation
      */
-    public char match(ISense source, ISense target) throws MatcherLibraryException {
+    public char match(ISense source, ISense target) throws ElementMatcherException {
         List<String> sourceLemmas = source.getLemmas();
         List<String> targetLemmas = target.getLemmas();
         for (String sourceLemma : sourceLemmas) {

@@ -2,8 +2,8 @@ package it.unitn.disi.smatch.matchers.element.gloss;
 
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.matchers.element.ElementMatcherException;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
-import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
 import it.unitn.disi.smatch.oracles.LinguisticOracleException;
 
 import java.util.StringTokenizer;
@@ -42,7 +42,7 @@ public class WNExtendedSemanticGlossComparison extends BaseGlossMatcher implemen
      * @param target the gloss of target
      * @return more general, less general or IDK relation
      */
-    public char match(ISense source, ISense target) throws MatcherLibraryException {
+    public char match(ISense source, ISense target) throws ElementMatcherException {
         char result = IMappingElement.IDK;
         try {
             String sSynset = source.getGloss();
@@ -68,7 +68,7 @@ public class WNExtendedSemanticGlossComparison extends BaseGlossMatcher implemen
                 result = MGFinal;
             }
         } catch (LinguisticOracleException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
         return result;
     }
@@ -79,9 +79,9 @@ public class WNExtendedSemanticGlossComparison extends BaseGlossMatcher implemen
      * @param sExtendedGloss extended gloss of source
      * @param tExtendedGloss extended gloss of target
      * @return more general, less general or IDK relation
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws it.unitn.disi.smatch.matchers.element.ElementMatcherException ElementMatcherException
      */
-    private char getDominantRelation(String sExtendedGloss, String tExtendedGloss) throws MatcherLibraryException {
+    private char getDominantRelation(String sExtendedGloss, String tExtendedGloss) throws ElementMatcherException {
         int Equals = 0;
         int moreGeneral = 0;
         int lessGeneral = 0;

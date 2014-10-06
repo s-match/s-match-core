@@ -1,12 +1,10 @@
 package it.unitn.disi.smatch.filters;
 
-import it.unitn.disi.smatch.SMatchConstants;
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.INode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Retains only specified kind of links in the mapping.
@@ -14,9 +12,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class RetainRelationsMappingFilter extends BaseFilter implements IMappingFilter {
-
-    private static final Logger log = LoggerFactory.getLogger(RetainRelationsMappingFilter.class);
+public class RetainRelationsMappingFilter extends BaseFilter implements IMappingFilter, IAsyncMappingFilter {
 
     private final String retainRelations;
 
@@ -25,33 +21,32 @@ public class RetainRelationsMappingFilter extends BaseFilter implements IMapping
         this.retainRelations = retainRelations;
     }
 
-    public IContextMapping<INode> filter(IContextMapping<INode> mapping) {
-        if (log.isInfoEnabled()) {
-            log.info("Filtering started...");
-        }
-        long start = System.currentTimeMillis();
+    public RetainRelationsMappingFilter(IMappingFactory mappingFactory, IContextMapping<INode> mapping, String retainRelations) {
+        super(mappingFactory, mapping);
+        this.retainRelations = retainRelations;
+    }
 
+    @Override
+    protected IContextMapping<INode> process(IContextMapping<INode> mapping) {
         IContextMapping<INode> result = mappingFactory.getContextMappingInstance(mapping.getSourceContext(), mapping.getTargetContext());
-
-        long counter = 0;
-        long total = mapping.size();
-        long reportInt = (total / 20) + 1;//i.e. report every 5%
 
         //check each mapping
         for (IMappingElement<INode> e : mapping) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
             if (-1 < retainRelations.indexOf(e.getRelation())) {
                 result.add(e);
             }
 
-            counter++;
-            if ((SMatchConstants.LARGE_TASK < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-                log.info(100 * counter / total + "%");
-            }
+            progress();
         }
 
-        if (log.isInfoEnabled()) {
-            log.info("Filtering finished: " + (System.currentTimeMillis() - start) + " ms");
-        }
         return result;
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>> asyncFilter(IContextMapping<INode> mapping) {
+        return new RetainRelationsMappingFilter(mappingFactory, mapping, retainRelations);
     }
 }

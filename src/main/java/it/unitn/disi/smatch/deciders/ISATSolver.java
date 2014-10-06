@@ -21,5 +21,5 @@ public interface ISATSolver {
      * @return whether problem is satisfiable or not
      * @throws SATSolverException SATSolverException
      */
-    public boolean isSatisfiable(String input) throws SATSolverException;
+    boolean isSatisfiable(String input) throws SATSolverException;
 }

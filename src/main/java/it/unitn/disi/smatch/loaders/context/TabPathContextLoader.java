@@ -1,5 +1,6 @@
 package it.unitn.disi.smatch.loaders.context;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.trees.Context;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * Loads context from a tab-delimited file, one line per path to root.
@@ -16,24 +18,31 @@ import java.io.IOException;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class TabPathContextLoader extends BaseFileContextLoader<IContext> implements IContextLoader {
+public class TabPathContextLoader extends BaseFileContextLoader<IContext, INode> implements IContextLoader, IAsyncContextLoader {
 
     private static final Logger log = LoggerFactory.getLogger(TabPathContextLoader.class);
+
+    public TabPathContextLoader() {
+    }
+
+    public TabPathContextLoader(String location) {
+        super(location);
+    }
 
     @Override
     protected IContext process(BufferedReader input) throws IOException {
         IContext result = new Context();
         result.createRoot("Top");
 
-        int nodesParsed = 0;
         String line;
         while ((line = input.readLine()) != null &&
                 !line.startsWith("#") &&
-                !line.isEmpty()) {
+                !line.isEmpty() &&
+                !Thread.currentThread().isInterrupted()) {
 
             createNode(result, line);
 
-            nodesParsed++;
+            setProgress(getProgress() + 1);
         }
 
         if (1 == result.getRoot().getChildCount()) {
@@ -41,8 +50,18 @@ public class TabPathContextLoader extends BaseFileContextLoader<IContext> implem
             newRoot.setParent(null);
             result.setRoot(newRoot);
         }
-        log.info("Parsed nodes:\t" + nodesParsed);
+
+        if (Thread.currentThread().isInterrupted()) {
+            result = null;
+        } else {
+            log.info("Parsed nodes: " + getProgress());
+        }
         return result;
+    }
+
+    @Override
+    public AsyncTask<IContext, INode> asyncLoad(String location) {
+        return new TabPathContextLoader(location);
     }
 
     private void createNode(IContext result, String line) {
@@ -58,10 +77,11 @@ public class TabPathContextLoader extends BaseFileContextLoader<IContext> implem
         }
     }
 
-    private INode findNode(INode curNode, String node) {
+    private INode findNode(INode curNode, String nodeName) {
         INode result = null;
-        for (INode child : curNode.getChildrenList()) {
-            if (node.equals(child.getNodeData().getName())) {
+        for (Iterator<INode> i = curNode.getChildren(); i.hasNext(); ) {
+            INode child = i.next();
+            if (nodeName.equals(child.getNodeData().getName())) {
                 result = child;
                 break;
             }

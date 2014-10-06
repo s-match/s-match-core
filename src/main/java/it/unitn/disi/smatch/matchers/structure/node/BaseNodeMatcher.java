@@ -26,7 +26,6 @@ public abstract class BaseNodeMatcher {
      * Makes axioms for a CNF formula out of relations between atomic concepts.
      *
      * @param hashConceptNumber HashMap for atomic concept of labels with its id
-     * @param nmtAcols          node -> list of node matching task acols
      * @param sourceACoLs       acol id -> acol object
      * @param targetACoLs       acol id -> acol object
      * @param acolMapping       mapping between atomic concepts
@@ -34,8 +33,7 @@ public abstract class BaseNodeMatcher {
      * @param targetNode        target node
      * @return axiom string and axiom count
      */
-    protected static Object[] mkAxioms(HashMap<IAtomicConceptOfLabel, String> hashConceptNumber,
-                                       Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
+    protected static Object[] mkAxioms(Map<IAtomicConceptOfLabel, String> hashConceptNumber,
                                        Map<String, IAtomicConceptOfLabel> sourceACoLs,
                                        Map<String, IAtomicConceptOfLabel> targetACoLs,
                                        IContextMapping<IAtomicConceptOfLabel> acolMapping,
@@ -43,52 +41,50 @@ public abstract class BaseNodeMatcher {
         StringBuilder axioms = new StringBuilder();
         Integer numberOfClauses = 0;
         // create DIMACS variables for all acols in the matching task
-        createVariables(hashConceptNumber, nmtAcols, sourceACoLs, sourceNode);
-        createVariables(hashConceptNumber, nmtAcols, targetACoLs, targetNode);
+        createVariables(hashConceptNumber, sourceACoLs, sourceNode);
+        createVariables(hashConceptNumber, targetACoLs, targetNode);
 
-        ArrayList<IAtomicConceptOfLabel> sourceACols = nmtAcols.get(sourceNode);
-        ArrayList<IAtomicConceptOfLabel> targetACols = nmtAcols.get(targetNode);
-        if (null != sourceACols && null != targetACols) {
-            for (IAtomicConceptOfLabel sourceACoL : sourceACols) {
-                for (IAtomicConceptOfLabel targetACoL : targetACols) {
-                    char relation = acolMapping.getRelation(sourceACoL, targetACoL);
-                    if (IMappingElement.IDK != relation) {
-                        //get the numbers of DIMACS variables corresponding to ACoLs
-                        String sourceVarNumber = hashConceptNumber.get(sourceACoL);
-                        String targetVarNumber = hashConceptNumber.get(targetACoL);
-                        if (IMappingElement.LESS_GENERAL == relation) {
+        for (Iterator<IAtomicConceptOfLabel> i = sourceNode.getNodeData().pathToRootACoLs(); i.hasNext(); ) {
+            IAtomicConceptOfLabel sourceACoL = i.next();
+            for (Iterator<IAtomicConceptOfLabel> j = targetNode.getNodeData().pathToRootACoLs(); j.hasNext(); ) {
+                IAtomicConceptOfLabel targetACoL = j.next();
+                char relation = acolMapping.getRelation(sourceACoL, targetACoL);
+                if (IMappingElement.IDK != relation) {
+                    //get the numbers of DIMACS variables corresponding to ACoLs
+                    String sourceVarNumber = hashConceptNumber.get(sourceACoL);
+                    String targetVarNumber = hashConceptNumber.get(targetACoL);
+                    if (IMappingElement.LESS_GENERAL == relation) {
+                        String tmp = "-" + sourceVarNumber + " " + targetVarNumber + " 0\n";
+                        //if not already present add to axioms
+                        if (-1 == axioms.indexOf(tmp)) {
+                            axioms.append(tmp);
+                            numberOfClauses++;
+                        }
+                    } else if (IMappingElement.MORE_GENERAL == relation) {
+                        String tmp = sourceVarNumber + " -" + targetVarNumber + " 0\n";
+                        if (-1 == axioms.indexOf(tmp)) {
+                            axioms.append(tmp);
+                            numberOfClauses++;
+                        }
+                    } else if (IMappingElement.EQUIVALENCE == relation) {
+                        if (!sourceVarNumber.equals(targetVarNumber)) {
+                            //add clauses for less and more generality
                             String tmp = "-" + sourceVarNumber + " " + targetVarNumber + " 0\n";
-                            //if not already present add to axioms
                             if (-1 == axioms.indexOf(tmp)) {
                                 axioms.append(tmp);
                                 numberOfClauses++;
                             }
-                        } else if (IMappingElement.MORE_GENERAL == relation) {
-                            String tmp = sourceVarNumber + " -" + targetVarNumber + " 0\n";
+                            tmp = sourceVarNumber + " -" + targetVarNumber + " 0\n";
                             if (-1 == axioms.indexOf(tmp)) {
                                 axioms.append(tmp);
                                 numberOfClauses++;
                             }
-                        } else if (IMappingElement.EQUIVALENCE == relation) {
-                            if (!sourceVarNumber.equals(targetVarNumber)) {
-                                //add clauses for less and more generality
-                                String tmp = "-" + sourceVarNumber + " " + targetVarNumber + " 0\n";
-                                if (-1 == axioms.indexOf(tmp)) {
-                                    axioms.append(tmp);
-                                    numberOfClauses++;
-                                }
-                                tmp = sourceVarNumber + " -" + targetVarNumber + " 0\n";
-                                if (-1 == axioms.indexOf(tmp)) {
-                                    axioms.append(tmp);
-                                    numberOfClauses++;
-                                }
-                            }
-                        } else if (IMappingElement.DISJOINT == relation) {
-                            String tmp = "-" + sourceVarNumber + " -" + targetVarNumber + " 0\n";
-                            if (-1 == axioms.indexOf(tmp)) {
-                                axioms.append(tmp);
-                                numberOfClauses++;
-                            }
+                        }
+                    } else if (IMappingElement.DISJOINT == relation) {
+                        String tmp = "-" + sourceVarNumber + " -" + targetVarNumber + " 0\n";
+                        if (-1 == axioms.indexOf(tmp)) {
+                            axioms.append(tmp);
+                            numberOfClauses++;
                         }
                     }
                 }
@@ -97,45 +93,59 @@ public abstract class BaseNodeMatcher {
         return new Object[]{axioms.toString(), numberOfClauses};
     }
 
-    private static void createVariables(HashMap<IAtomicConceptOfLabel, String> hashConceptNumber,
-                                        Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
+    /**
+     * Creates DIMACS variables for all concepts in the node matching task.
+     *
+     * @param hashConceptNumber acol -> variable number
+     * @param acolsMap          acol id -> acol
+     * @param node              node
+     */
+    private static void createVariables(Map<IAtomicConceptOfLabel, String> hashConceptNumber,
                                         Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
-        // creates DIMACS variables for all concepts in the node matching task
-        ArrayList<IAtomicConceptOfLabel> acols = nmtAcols.get(node);
-        if (null == acols) {
-            // create acols list and cache it
-
-            // count acols to allocate properly sized list
-            int acolCount = 0;
-            INode curNode = node;
-            while (null != curNode) {
-                acolCount = acolCount + curNode.getNodeData().getACoLCount();
-                curNode = curNode.getParent();
+        cacheACoLs(acolsMap, node);
+        for (Iterator<IAtomicConceptOfLabel> i = node.getNodeData().pathToRootACoLs(); i.hasNext(); ) {
+            IAtomicConceptOfLabel acol = i.next();
+            // create corresponding to id variable number
+            // and put it as a value of hash table with key equal to ACoL
+            if (!hashConceptNumber.containsKey(acol)) {
+                hashConceptNumber.put(acol, Integer.toString(hashConceptNumber.size() + 1));
             }
+        }
+    }
 
-            // collect acols
-            acols = new ArrayList<>(acolCount);
-            curNode = node;
-            while (null != curNode) {
-                acols.addAll(curNode.getNodeData().getACoLsList());
-                curNode = curNode.getParent();
-            }
-            nmtAcols.put(node, acols);
+    private static void cacheACoLs(Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
+        // without acols can't check the map, so by default check path to root
+        boolean cached = isNodeCached(acolsMap, node);
+        if (!cached) {
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (node) {
+                cached = isNodeCached(acolsMap, node);
+                if (!cached) {
+                    // ensure the nodes above are cached
+                    if (null != node.getParent()) {
+                        cacheACoLs(acolsMap, node.getParent());
+                    }
 
-            // cache also acol ids for node - for the nodes above it they should be cached already
-            if (node != null) {
-                for (IAtomicConceptOfLabel acol : node.getNodeData().getACoLsList()) {
-                    acolsMap.put(node.getNodeData().getId() + "_" + Integer.toString(acol.getId()), acol);
+                    // cache acol ids for node
+                    for (IAtomicConceptOfLabel acol : node.getNodeData().getACoLsList()) {
+                        acolsMap.put(node.getNodeData().getId() + "_" + Integer.toString(acol.getId()), acol);
+                    }
                 }
             }
         }
-        for (IAtomicConceptOfLabel sourceACoL : acols) {
-            // create corresponding to id variable number
-            // and put it as a value of hash table with key equal to ACoL
-            if (!hashConceptNumber.containsKey(sourceACoL)) {
-                hashConceptNumber.put(sourceACoL, Integer.toString(hashConceptNumber.size() + 1));
-            }
+    }
+
+    private static boolean isNodeCached(Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
+        boolean cached;
+        if (0 == node.getNodeData().getACoLCount()) {
+            cached = false;
+        } else {
+            // if last acol cached - all preceding are cached too
+            String key = node.getNodeData().getId() +
+                    "_" + Integer.toString(node.getNodeData().getACoLAt(node.getNodeData().getACoLCount() - 1).getId());
+            cached = acolsMap.containsKey(key);
         }
+        return cached;
     }
 
     /**
@@ -148,7 +158,7 @@ public abstract class BaseNodeMatcher {
      * @param node              node
      * @return formula with DIMACS variables
      */
-    protected ArrayList<ArrayList<String>> parseFormula(HashMap<IAtomicConceptOfLabel, String> hashConceptNumber,
+    protected ArrayList<ArrayList<String>> parseFormula(Map<IAtomicConceptOfLabel, String> hashConceptNumber,
                                                         Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
         ArrayList<ArrayList<String>> representation = new ArrayList<>();
         boolean saved_negation = false;
@@ -195,7 +205,7 @@ public abstract class BaseNodeMatcher {
         return dimacs.toString();
     }
 
-    protected static int negateFormulaInList(HashMap<IAtomicConceptOfLabel, String> hashConceptNumber, ArrayList<ArrayList<String>> pivot, ArrayList<ArrayList<String>> result) {
+    protected static int negateFormulaInList(Map<IAtomicConceptOfLabel, String> hashConceptNumber, ArrayList<ArrayList<String>> pivot, ArrayList<ArrayList<String>> result) {
         result.clear();
         ArrayList<String> firstClause = new ArrayList<>();
         int numberOfVariables = hashConceptNumber.size();

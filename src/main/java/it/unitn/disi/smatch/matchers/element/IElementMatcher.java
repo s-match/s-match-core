@@ -18,7 +18,7 @@ public interface IElementMatcher {
      * @param sourceContext interface of source context
      * @param targetContext interface of target context
      * @return mapping between atomic concepts in both contexts
-     * @throws MatcherLibraryException MatcherLibraryException
+     * @throws ElementMatcherException ElementMatcherException
      */
-    public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws MatcherLibraryException;
+    IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws ElementMatcherException;
 }

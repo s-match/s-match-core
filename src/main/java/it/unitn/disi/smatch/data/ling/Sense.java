@@ -2,6 +2,7 @@ package it.unitn.disi.smatch.data.ling;
 
 import it.unitn.disi.smatch.oracles.LinguisticOracleException;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,7 +11,7 @@ import java.util.List;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public abstract class Sense implements ISense {
+public abstract class Sense implements ISense, Serializable {
 
     protected final String id;
 

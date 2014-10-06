@@ -5,6 +5,8 @@ import it.unitn.disi.smatch.data.matrices.IMatchMatrixFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 
+import java.util.Iterator;
+
 /**
  * Mapping between context nodes based on a matrix.
  *
@@ -17,18 +19,25 @@ public class NodesMatrixMapping extends MatrixMapping<INode> {
     }
 
     @Override
-    protected int getRowCount(IContext c) {
-        return getNodeCount(c);
+    protected int indexSource(IContext c) {
+        return indexContext(c);
     }
 
     @Override
-    protected int getColCount(IContext c) {
-        return getNodeCount(c);
+    protected int indexTarget(IContext c) {
+        return indexContext(c);
     }
 
-    private int getNodeCount(IContext c) {
+    /**
+     * Indexes and counts nodes in the context
+     *
+     * @param c context
+     * @return node count
+     */
+    private int indexContext(IContext c) {
         int result = 0;
-        for (INode node : c.getNodesList()) {
+        for (Iterator<INode> i = c.getNodes(); i.hasNext(); ) {
+            INode node = i.next();
             node.setIndex(result);
             result++;
         }
@@ -46,7 +55,8 @@ public class NodesMatrixMapping extends MatrixMapping<INode> {
     }
 
     private void initNodes(IContext c, IIndexedObject[] o) {
-        for (INode node : c.getNodesList()) {
+        for (Iterator<INode> i = c.getNodes(); i.hasNext();) {
+            INode node = i.next();
             o[node.getIndex()] = node;
         }
     }

@@ -14,7 +14,14 @@ import java.io.InputStreamReader;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public abstract class BaseFileContextLoader<E extends IBaseContext<? extends IBaseNode>> extends BaseContextLoader<E> implements IBaseContextLoader<E> {
+public abstract class BaseFileContextLoader<E extends IBaseContext<T>, T extends IBaseNode> extends BaseContextLoader<E, T> implements IBaseContextLoader<E, T> {
+
+    protected BaseFileContextLoader() {
+    }
+
+    protected BaseFileContextLoader(String location) {
+        super(location);
+    }
 
     public E loadContext(String location) throws ContextLoaderException {
         E result;

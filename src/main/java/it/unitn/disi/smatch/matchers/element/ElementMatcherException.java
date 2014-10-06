@@ -7,13 +7,13 @@ import it.unitn.disi.smatch.SMatchException;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class MatcherLibraryException extends SMatchException {
+public class ElementMatcherException extends SMatchException {
 
-    public MatcherLibraryException(String errorDescription) {
+    public ElementMatcherException(String errorDescription) {
         super(errorDescription);
     }
 
-    public MatcherLibraryException(String errorDescription, Throwable cause) {
+    public ElementMatcherException(String errorDescription, Throwable cause) {
         super(errorDescription, cause);
     }
 }

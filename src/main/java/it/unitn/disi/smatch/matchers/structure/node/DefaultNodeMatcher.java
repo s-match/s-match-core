@@ -23,7 +23,6 @@ public class DefaultNodeMatcher extends BaseNodeMatcher implements INodeMatcher 
     }
 
     public char nodeMatch(IContextMapping<IAtomicConceptOfLabel> acolMapping,
-                          Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
                           Map<String, IAtomicConceptOfLabel> sourceACoLs,
                           Map<String, IAtomicConceptOfLabel> targetACoLs,
                           INode sourceNode, INode targetNode) throws NodeMatcherException {
@@ -42,13 +41,13 @@ public class DefaultNodeMatcher extends BaseNodeMatcher implements INodeMatcher 
             boolean isOpposite;
 
             // ACoLs -> its DIMACS variable number
-            HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
+            Map<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
             // number of variables in SAT problem
             Integer numberOfVariables;
             // number of clauses in SAT problem
             Integer numberOfClauses;
 
-            Object[] obj = mkAxioms(hashConceptNumber, nmtAcols, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
+            Object[] obj = mkAxioms(hashConceptNumber, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
             String axioms = (String) obj[0];
             int num_of_axiom_clauses = (Integer) obj[1];
             // parse formulas with acols into formulas with DIMACS variables

@@ -25,14 +25,14 @@ public interface IMatchManager {
      *
      * @return a context instance
      */
-    public IContext createContext();
+    IContext createContext();
 
     /**
      * Returns mapping factory.
      *
      * @return mapping factory
      */
-    public IMappingFactory getMappingFactory();
+    IMappingFactory getMappingFactory();
 
     /**
      * Uses current loader to load the context from external source into internal data structure.
@@ -53,11 +53,11 @@ public interface IMatchManager {
     /**
      * Renders the context using a current renderer.
      *
-     * @param ctxSource context to be rendered
+     * @param context context to be rendered
      * @param location  a render destination passed to the context renderer
      * @throws SMatchException SMatchException
      */
-    void renderContext(IBaseContext ctxSource, String location) throws SMatchException;
+    void renderContext(IBaseContext context, String location) throws SMatchException;
 
     /**
      * Returns currently configured context renderer.

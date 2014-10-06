@@ -1,20 +1,19 @@
 package it.unitn.disi.smatch.matchers.structure.tree.def;
 
-import it.unitn.disi.smatch.SMatchConstants;
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
+import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.matchers.structure.node.INodeMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.BaseTreeMatcher;
-import it.unitn.disi.smatch.matchers.structure.tree.ITreeMatcher;
+import it.unitn.disi.smatch.matchers.structure.tree.IAsyncTreeMatcher;
 import it.unitn.disi.smatch.matchers.structure.tree.TreeMatcherException;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -23,41 +22,52 @@ import java.util.Map;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class DefaultTreeMatcher extends BaseTreeMatcher implements ITreeMatcher {
-
-    private static final Logger log = LoggerFactory.getLogger(DefaultTreeMatcher.class);
+public class DefaultTreeMatcher extends BaseTreeMatcher implements IAsyncTreeMatcher {
 
     public DefaultTreeMatcher(INodeMatcher nodeMatcher, IMappingFactory mappingFactory) {
-        super(nodeMatcher, mappingFactory);
+        super(mappingFactory, nodeMatcher);
+    }
+
+    public DefaultTreeMatcher(INodeMatcher nodeMatcher, IMappingFactory mappingFactory,
+                              IContext sourceContext, IContext targetContext,
+                              IContextMapping<IAtomicConceptOfLabel> acolMapping) {
+        super(mappingFactory, nodeMatcher, sourceContext, targetContext, acolMapping);
+        setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
     }
 
     public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext, IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
+        if (0 == getTotal()) {
+            setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+        }
+
         IContextMapping<INode> mapping = mappingFactory.getContextMappingInstance(sourceContext, targetContext);
 
         // semantic relation for particular node matching task
         char relation;
 
-        long counter = 0;
-        long total = (long) sourceContext.getNodesList().size() * (long) targetContext.getNodesList().size();
-        long reportInt = (total / 20) + 1;//i.e. report every 5%
-
         Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<>();
         Map<String, IAtomicConceptOfLabel> targetAcols = new HashMap<>();
 
-        Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols = new HashMap<>();
+        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+            INode sourceNode = i.next();
+            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
 
-        for (INode sourceNode : sourceContext.getNodesList()) {
-            for (INode targetNode : targetContext.getNodesList()) {
-                relation = nodeMatcher.nodeMatch(acolMapping, nmtAcols, sourceAcols, targetAcols, sourceNode, targetNode);
+                INode targetNode = j.next();
+                relation = nodeMatcher.nodeMatch(acolMapping, sourceAcols, targetAcols, sourceNode, targetNode);
                 mapping.setRelation(sourceNode, targetNode, relation);
 
-                counter++;
-                if ((SMatchConstants.LARGE_TASK < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-                    log.info(100 * counter / total + "%");
-                }
+                progress();
             }
         }
 
         return mapping;
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>> asyncTreeMatch(IContext sourceContext, IContext targetContext, IContextMapping<IAtomicConceptOfLabel> acolMapping) {
+        return new DefaultTreeMatcher(nodeMatcher, mappingFactory, sourceContext, targetContext, acolMapping);
     }
 }

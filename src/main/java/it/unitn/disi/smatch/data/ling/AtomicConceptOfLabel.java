@@ -2,6 +2,7 @@ package it.unitn.disi.smatch.data.ling;
 
 import it.unitn.disi.smatch.data.IndexedObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -14,7 +15,7 @@ import java.util.List;
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class AtomicConceptOfLabel extends IndexedObject implements IAtomicConceptOfLabel {
+public class AtomicConceptOfLabel extends IndexedObject implements IAtomicConceptOfLabel, Serializable {
 
     private int id;
     private String token;
@@ -124,7 +125,7 @@ public class AtomicConceptOfLabel extends IndexedObject implements IAtomicConcep
     }
 
     public void removeSense(int index) {
-        // checks children and throws exception in case
+        // checks index and throws exception in case
         getSenseAt(index);
         senses.remove(index);
     }
@@ -135,12 +136,6 @@ public class AtomicConceptOfLabel extends IndexedObject implements IAtomicConcep
         }
 
         removeSense(getSenseIndex(sense));
-    }
-
-    public void trim() {
-        if (null != senses) {
-            senses.trimToSize();
-        }
     }
 
     public String toString() {

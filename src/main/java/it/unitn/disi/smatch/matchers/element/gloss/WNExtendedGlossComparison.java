@@ -2,8 +2,8 @@ package it.unitn.disi.smatch.matchers.element.gloss;
 
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.matchers.element.ElementMatcherException;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
-import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
 import it.unitn.disi.smatch.oracles.ILinguisticOracle;
 import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.oracles.LinguisticOracleException;
@@ -43,7 +43,7 @@ public class WNExtendedGlossComparison extends WNExtendedGloss implements ISense
      * @param target1 the gloss of target
      * @return synonym or IDK relation
      */
-    public char match(ISense source1, ISense target1) throws MatcherLibraryException {
+    public char match(ISense source1, ISense target1) throws ElementMatcherException {
         char result = IMappingElement.IDK;
         try {
             String tExtendedGloss = getExtendedGloss(target1, 1, IMappingElement.LESS_GENERAL);
@@ -67,7 +67,7 @@ public class WNExtendedGlossComparison extends WNExtendedGloss implements ISense
                 result = IMappingElement.EQUIVALENCE;
             }
         } catch (LinguisticOracleException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
         return result;
     }

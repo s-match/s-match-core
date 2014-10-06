@@ -1,13 +1,13 @@
 package it.unitn.disi.smatch.filters;
 
-import it.unitn.disi.smatch.SMatchConstants;
+import it.unitn.disi.smatch.async.AsyncTask;
+import it.unitn.disi.smatch.data.mappings.HashMapping;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -15,35 +15,45 @@ import java.util.List;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class RedundantGeneratorMappingFilter implements IMappingFilter {
+public class RedundantGeneratorMappingFilter extends BaseFilter implements IAsyncMappingFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(RedundantGeneratorMappingFilter.class);
+    public RedundantGeneratorMappingFilter() {
+        // HashMapping is not used, just to allow reusing BaseFilter
+        super(new HashMapping<>(), null);
+    }
 
-    public IContextMapping<INode> filter(IContextMapping<INode> mapping) {
-        if (log.isInfoEnabled()) {
-            log.info("Filtering started...");
-        }
-        long start = System.currentTimeMillis();
+    public RedundantGeneratorMappingFilter(IContextMapping<INode> mapping) {
+        super(new HashMapping<>(), mapping);
+        setTotal(2 * mapping.getSourceContext().getNodesCount() * mapping.getTargetContext().getNodesCount());
+    }
 
+    protected IContextMapping<INode> process(IContextMapping<INode> mapping) {
         IContext sourceContext = mapping.getSourceContext();
         IContext targetContext = mapping.getTargetContext();
 
-        long counter = 0;
-        long total = 2 * (long) (sourceContext.getRoot().getDescendantCount() + 1) * (long) (targetContext.getRoot().getDescendantCount() + 1);
-        long reportInt = (total / 20) + 1;//i.e. report every 5%
-
-        for (INode source : sourceContext.getNodesList()) {
-            for (INode target : targetContext.getNodesList()) {
-                mapping.setRelation(source, target, computeMapping(mapping, source, target));
-                counter++;
-                if ((SMatchConstants.LARGE_TASK < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-                    log.info(100 * counter / total + "%");
+        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+            INode source = i.next();
+            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
                 }
+
+                INode target = j.next();
+                char relation = computeMapping(mapping, source, target);
+                mapping.setRelation(source, target, relation);
+
+                progress();
             }
         }
 
-        for (INode source : sourceContext.getNodesList()) {
-            for (INode target : targetContext.getNodesList()) {
+        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+            INode source = i.next();
+            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
+
+                INode target = j.next();
                 switch (mapping.getRelation(source, target)) {
                     case IMappingElement.ENTAILED_LESS_GENERAL: {
                         mapping.setRelation(source, target, IMappingElement.LESS_GENERAL);
@@ -61,18 +71,16 @@ public class RedundantGeneratorMappingFilter implements IMappingFilter {
                     }
                 }
 
-                counter++;
-                if ((SMatchConstants.LARGE_TASK < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-                    log.info(100 * counter / total + "%");
-                }
+                progress();
             }
         }
 
-        if (log.isInfoEnabled()) {
-            log.info("Filtering finished: " + (System.currentTimeMillis() - start) + " ms");
-        }
-
         return mapping;
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>> asyncFilter(IContextMapping<INode> mapping) {
+        return new RedundantGeneratorMappingFilter(mapping);
     }
 
     protected char computeMapping(IContextMapping<INode> mapping, INode source, INode target) {

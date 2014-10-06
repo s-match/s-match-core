@@ -12,21 +12,35 @@ import java.util.AbstractSet;
 public abstract class BaseMapping<T> extends AbstractSet<IMappingElement<T>> implements IContextMapping<T> {
 
     protected double similarity;
-    protected IContext sourceContext;
-    protected IContext targetContext;
+    protected final IContext sourceContext;
+    protected final IContext targetContext;
 
+    protected BaseMapping() {
+        this.sourceContext = null;
+        this.targetContext = null;
+    }
+
+    protected BaseMapping(final IContext sourceContext, final IContext targetContext) {
+        this.sourceContext = sourceContext;
+        this.targetContext = targetContext;
+    }
+
+    @Override
     public double getSimilarity() {
         return similarity;
     }
 
+    @Override
     public void setSimilarity(double similarity) {
         this.similarity = similarity;
     }
 
+    @Override
     public IContext getSourceContext() {
         return sourceContext;
     }
 
+    @Override
     public IContext getTargetContext() {
         return targetContext;
     }

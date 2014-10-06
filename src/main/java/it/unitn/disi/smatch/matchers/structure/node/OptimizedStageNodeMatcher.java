@@ -15,17 +15,22 @@ import java.util.Map;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class OptimizedStageNodeMatcher extends BaseNodeMatcher {
+public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeMatcher {
 
     public OptimizedStageNodeMatcher(ISATSolver satSolver) {
         super(satSolver);
+    }
+
+    // support INodeMatcher to allow casts
+    @Override
+    public char nodeMatch(IContextMapping<IAtomicConceptOfLabel> acolMapping, Map<String, IAtomicConceptOfLabel> sourceACoLs, Map<String, IAtomicConceptOfLabel> targetACoLs, INode sourceNode, INode targetNode) throws NodeMatcherException {
+        throw new UnsupportedOperationException();
     }
 
     /**
      * Checks whether source node and target node are disjoint.
      *
      * @param acolMapping mapping between acols
-     * @param nmtAcols    node -> list of node matching task acols
      * @param sourceACoLs mapping acol id -> acol object
      * @param targetACoLs mapping acol id -> acol object
      * @param sourceNode  interface of source node
@@ -34,8 +39,8 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher {
      * @throws NodeMatcherException NodeMatcherException
      */
     public boolean nodeDisjoint(IContextMapping<IAtomicConceptOfLabel> acolMapping,
-                                Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
-                                Map<String, IAtomicConceptOfLabel> sourceACoLs, Map<String, IAtomicConceptOfLabel> targetACoLs,
+                                Map<String, IAtomicConceptOfLabel> sourceACoLs,
+                                Map<String, IAtomicConceptOfLabel> targetACoLs,
                                 INode sourceNode, INode targetNode) throws NodeMatcherException {
         boolean result = false;
         String sourceCNodeFormula = sourceNode.getNodeData().getcNodeFormula();
@@ -47,7 +52,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher {
                 null != sourceCLabFormula && null != targetCLabFormula && !sourceCLabFormula.isEmpty() && !targetCLabFormula.isEmpty()
                 ) {
             HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
-            Object[] obj = mkAxioms(hashConceptNumber, nmtAcols, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
+            Object[] obj = mkAxioms(hashConceptNumber, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
             String axioms = (String) obj[0];
             int num_of_axiom_clauses = (Integer) obj[1];
 
@@ -72,7 +77,6 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher {
      * @param sourceNode  interface of source node
      * @param targetNode  interface of target node
      * @param acolMapping mapping between acols
-     * @param nmtAcols    node -> list of node matching task acols
      * @param sourceACoLs mapping acol id -> acol object
      * @param targetACoLs mapping acol id -> acol object
      * @return true if the nodes are in subsumption relation
@@ -80,7 +84,6 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher {
      */
     public boolean nodeSubsumedBy(INode sourceNode, INode targetNode,
                                   IContextMapping<IAtomicConceptOfLabel> acolMapping,
-                                  Map<INode, ArrayList<IAtomicConceptOfLabel>> nmtAcols,
                                   Map<String, IAtomicConceptOfLabel> sourceACoLs,
                                   Map<String, IAtomicConceptOfLabel> targetACoLs) throws NodeMatcherException {
         boolean result = false;
@@ -94,7 +97,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher {
                 ) {
             if (sourceNode.getNodeData().getSource()) {
                 HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
-                Object[] obj = mkAxioms(hashConceptNumber, nmtAcols, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
+                Object[] obj = mkAxioms(hashConceptNumber, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
                 String axioms = (String) obj[0];
                 int num_of_axiom_clauses = (Integer) obj[1];
 
@@ -113,7 +116,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher {
             } else {
                 //swap source, target and relation
                 HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
-                Object[] obj = mkAxioms(hashConceptNumber, nmtAcols, targetACoLs, sourceACoLs, acolMapping, targetNode, sourceNode);
+                Object[] obj = mkAxioms(hashConceptNumber, targetACoLs, sourceACoLs, acolMapping, targetNode, sourceNode);
                 String axioms = (String) obj[0];
                 int num_of_axiom_clauses = (Integer) obj[1];
 

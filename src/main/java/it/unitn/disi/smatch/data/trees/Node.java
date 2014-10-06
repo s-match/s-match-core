@@ -3,10 +3,7 @@ package it.unitn.disi.smatch.data.trees;
 import it.unitn.disi.smatch.data.ling.AtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class represents a node in the hierarchy. It contains logical (cNode and cLab formulas),
@@ -185,15 +182,60 @@ public class Node extends BaseNode<INode, INodeData> implements INode, INodeData
         return child;
     }
 
-    public void trim() {
-        super.trim();
-        if (null != acols) {
-            acols.trimToSize();
-            for (IAtomicConceptOfLabel acol : acols) {
-                if (acol instanceof AtomicConceptOfLabel) {
-                    ((AtomicConceptOfLabel) acol).trim();
-                }
+    @Override
+    public Iterator<IAtomicConceptOfLabel> pathToRootACoLs() {
+        return new PathToRootACoLIterator(this);
+    }
+
+    private final static class PathToRootACoLIterator implements Iterator<IAtomicConceptOfLabel> {
+        private INode curNode;
+        private int curIndex;
+        private IAtomicConceptOfLabel next;
+
+        public PathToRootACoLIterator(final INode node) {
+            curNode = node;
+            curIndex = 0;
+
+            // find next
+            while (null != curNode && curNode.getNodeData().getACoLCount() <= curIndex) {
+                curNode = curNode.getParent();
+                curIndex = 0;
             }
+            if (null != curNode && curIndex < curNode.getNodeData().getACoLCount()) {
+                next = curNode.getNodeData().getACoLAt(curIndex);
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return null != next;
+        }
+
+        @Override
+        public IAtomicConceptOfLabel next() {
+            if (null == next) {
+                throw new NoSuchElementException();
+            }
+            IAtomicConceptOfLabel result = next;
+            curIndex++;
+
+            // find next
+            while (null != curNode && curNode.getNodeData().getACoLCount() <= curIndex) {
+                curNode = curNode.getParent();
+                curIndex = 0;
+            }
+            if (null != curNode && curIndex < curNode.getNodeData().getACoLCount()) {
+                next = curNode.getNodeData().getACoLAt(curIndex);
+            } else {
+                next = null;
+            }
+
+            return result;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
         }
     }
 }

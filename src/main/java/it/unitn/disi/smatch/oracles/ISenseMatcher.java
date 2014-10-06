@@ -20,7 +20,7 @@ public interface ISenseMatcher {
      * @return a relation
      * @throws SenseMatcherException SenseMatcherException
      */
-    public char getRelation(List<ISense> sourceSenses, List<ISense> targetSenses) throws SenseMatcherException;
+    char getRelation(List<ISense> sourceSenses, List<ISense> targetSenses) throws SenseMatcherException;
 
     /**
      * Checks whether the source is more general than target.
@@ -30,7 +30,7 @@ public interface ISenseMatcher {
      * @return whether relation holds
      * @throws SenseMatcherException SenseMatcherException
      */
-    public boolean isSourceMoreGeneralThanTarget(ISense source, ISense target) throws SenseMatcherException;
+    boolean isSourceMoreGeneralThanTarget(ISense source, ISense target) throws SenseMatcherException;
 
     /**
      * Checks whether the source is less general than target.
@@ -40,7 +40,7 @@ public interface ISenseMatcher {
      * @return whether relation holds
      * @throws SenseMatcherException SenseMatcherException
      */
-    public boolean isSourceLessGeneralThanTarget(ISense source, ISense target) throws SenseMatcherException;
+    boolean isSourceLessGeneralThanTarget(ISense source, ISense target) throws SenseMatcherException;
 
     /**
      * Checks whether the source is a synonym of the target.
@@ -50,7 +50,7 @@ public interface ISenseMatcher {
      * @return whether relation holds
      * @throws SenseMatcherException SenseMatcherException
      */
-    public boolean isSourceSynonymTarget(ISense source, ISense target) throws SenseMatcherException;
+    boolean isSourceSynonymTarget(ISense source, ISense target) throws SenseMatcherException;
 
     /**
      * Checks whether the source is disjoint with the target.
@@ -60,5 +60,5 @@ public interface ISenseMatcher {
      * @return whether relation holds
      * @throws SenseMatcherException SenseMatcherException
      */
-    public boolean isSourceOppositeToTarget(ISense source, ISense target) throws SenseMatcherException;
+    boolean isSourceOppositeToTarget(ISense source, ISense target) throws SenseMatcherException;
 }

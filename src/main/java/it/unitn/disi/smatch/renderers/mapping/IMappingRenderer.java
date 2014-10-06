@@ -15,10 +15,10 @@ public interface IMappingRenderer {
      * Saves the mapping into a file.
      *
      * @param mapping    a mapping to render
-     * @param outputFile an output file or DB connection
+     * @param location an output file or DB connection
      * @throws MappingRendererException MappingRendererException
      */
-    void render(IContextMapping<INode> mapping, String outputFile) throws MappingRendererException;
+    void render(IContextMapping<INode> mapping, String location) throws MappingRendererException;
 
     /**
      * Returns the description of the format.

@@ -1,9 +1,9 @@
 package it.unitn.disi.smatch.renderers.mapping;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.trees.INode;
-import it.unitn.disi.smatch.data.util.MappingProgressContainer;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -15,9 +15,26 @@ import java.io.IOException;
  */
 public class PlainXTopMappingRenderer extends PlainMappingRenderer {
 
+    public PlainXTopMappingRenderer() {
+        super(null, null);
+    }
+
+    public PlainXTopMappingRenderer(String location, IContextMapping<INode> mapping) {
+        super(location, mapping);
+    }
+
     @Override
-    protected void process(IContextMapping<INode> mapping, BufferedWriter out, MappingProgressContainer progressContainer) throws IOException {
+    public AsyncTask<Void, IMappingElement<INode>> asyncRender(IContextMapping<INode> mapping, String location) {
+        return new PlainXTopMappingRenderer(location, mapping);
+    }
+
+    @Override
+    protected void process(IContextMapping<INode> mapping, BufferedWriter out) throws IOException {
         for (IMappingElement<INode> mappingElement : mapping) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+
             if (mappingElement.getSource().hasParent() && mappingElement.getTarget().hasParent()) {
                 String sourceConceptName = getNodePathToRoot(mappingElement.getSource());
                 String targetConceptName = getNodePathToRoot(mappingElement.getTarget());
@@ -25,8 +42,7 @@ public class PlainXTopMappingRenderer extends PlainMappingRenderer {
 
                 out.write(sourceConceptName + "\t" + relation + "\t" + targetConceptName + "\n");
 
-                progressContainer.countRelation(relation);
-                progressContainer.progress();
+                progress();
             }
         }
     }

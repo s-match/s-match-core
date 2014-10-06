@@ -7,6 +7,11 @@ package it.unitn.disi.smatch.data.matrices;
  */
 public interface IMatchMatrixFactory {
 
-    IMatchMatrix getInstance();
-
+    /**
+     * Returns a matrix x per y.
+     *
+     * @param x rows count
+     * @param y column count
+     */
+    IMatchMatrix getInstance(int x, int y);
 }

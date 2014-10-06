@@ -3,6 +3,8 @@ package it.unitn.disi.smatch.data.matrices;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 
 import java.util.Arrays;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Default matrix for matching results.
@@ -12,39 +14,68 @@ import java.util.Arrays;
  */
 public class MatchMatrix implements IMatchMatrix, IMatchMatrixFactory {
 
-    private int x = 0;
-    private int y = 0;
-    private char[][] matrix = null;
+    private final int x;
+    private final int y;
+    private final char[][] matrix;
+    private final ReadWriteLock matrixLock = new ReentrantReadWriteLock();
 
-    public void init(int x, int y) {
-        matrix = new char[x][y];
+    /**
+     * Factory constructor.
+     */
+    public MatchMatrix() {
+        this.x = 0;
+        this.y = 0;
+        this.matrix = null;
+    }
+
+    /**
+     * Matrix instance constructor.
+     *
+     * @param x row count
+     * @param y column count
+     */
+    public MatchMatrix(final int x, final int y) {
         this.x = x;
         this.y = y;
-
+        this.matrix = new char[x][y];
         for (char[] row : matrix) {
             Arrays.fill(row, IMappingElement.IDK);
         }
     }
 
-    public char get(int x, int y) {
-        return matrix[x][y];
+    @Override
+    public char get(final int x, final int y) {
+        matrixLock.readLock().lock();
+        char c = matrix[x][y];
+        matrixLock.readLock().unlock();
+        return c;
     }
 
-    public boolean set(int x, int y, final char value) {
+    @Override
+    public boolean set(final int x, final int y, final char value) {
+        matrixLock.readLock().lock();
         boolean result = value == matrix[x][y];
-        matrix[x][y] = value;
+        matrixLock.readLock().unlock();
+        if (!result) {
+            matrixLock.writeLock().lock();
+            matrix[x][y] = value;
+            matrixLock.writeLock().unlock();
+        }
         return result;
     }
 
+    @Override
     public int getX() {
         return x;
     }
 
+    @Override
     public int getY() {
         return y;
     }
 
-    public IMatchMatrix getInstance() {
-        return new MatchMatrix();
+    @Override
+    public IMatchMatrix getInstance(final int x, final int y) {
+        return new MatchMatrix(x, y);
     }
 }

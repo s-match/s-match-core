@@ -1,12 +1,10 @@
 package it.unitn.disi.smatch.filters;
 
-import it.unitn.disi.smatch.SMatchConstants;
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.INode;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import java.util.Iterator;
 
@@ -23,41 +21,38 @@ import java.util.Iterator;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class RedundantMappingFilter extends BaseFilter implements IMappingFilter {
-
-    private static final Logger log = LoggerFactory.getLogger(RedundantMappingFilter.class);
+public class RedundantMappingFilter extends BaseFilter implements IAsyncMappingFilter {
 
     public RedundantMappingFilter(IMappingFactory mappingFactory) {
         super(mappingFactory);
     }
 
-    public IContextMapping<INode> filter(IContextMapping<INode> mapping) {
-        if (log.isInfoEnabled()) {
-            log.info("Filtering started...");
-        }
-        long start = System.currentTimeMillis();
+    public RedundantMappingFilter(IMappingFactory mappingFactory, IContextMapping<INode> mapping) {
+        super(mappingFactory, mapping);
+    }
 
-        long counter = 0;
-        long total = (long) mapping.size();
-        long reportInt = (total / 20) + 1;//i.e. report every 5%
-
+    @Override
+    protected IContextMapping<INode> process(IContextMapping<INode> mapping) {
         IContextMapping<INode> result = mappingFactory.getContextMappingInstance(mapping.getSourceContext(), mapping.getTargetContext());
 
         for (IMappingElement<INode> e : mapping) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+
             if (!isRedundant(mapping, e)) {
                 result.setRelation(e.getSource(), e.getTarget(), e.getRelation());
             }
 
-            counter++;
-            if ((SMatchConstants.LARGE_TASK < total) && (0 == (counter % reportInt)) && log.isInfoEnabled()) {
-                log.info(100 * counter / total + "%");
-            }
+            progress();
         }
 
-        if (log.isInfoEnabled()) {
-            log.info("Filtering finished: " + (System.currentTimeMillis() - start) + " ms");
-        }
         return result;
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>> asyncFilter(IContextMapping<INode> mapping) {
+        return new RedundantMappingFilter(mappingFactory, mapping);
     }
 
     /**
@@ -104,7 +99,7 @@ public class RedundantMappingFilter extends BaseFilter implements IMappingFilter
 
     //because in filtering we have a matrix and we do not "discover" links
     //we need to check ancestors and descendants, and not only parents and children
-    //otherwise, in case of series of redundant links we remove first by checking parent
+    //otherwise, in case of series of redundant links we remove the first one by checking parent
     //and then all the rest is not removed because of the "gap"
 
     protected boolean verifyCondition1(IContextMapping<INode> mapping, IMappingElement<INode> e) {

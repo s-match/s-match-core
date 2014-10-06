@@ -16,5 +16,5 @@ public interface IContextPreprocessor {
      * @param context context to be preprocessed
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
-    public void preprocess(IContext context) throws ContextPreprocessorException;
+    void preprocess(IContext context) throws ContextPreprocessorException;
 }

@@ -9,7 +9,7 @@ import it.unitn.disi.smatch.loaders.ILoader;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public interface IBaseContextLoader<E extends IBaseContext<? extends IBaseNode>> {
+public interface IBaseContextLoader<E extends IBaseContext<T>, T extends IBaseNode> {
 
     /**
      * Loads the context from a file or database.

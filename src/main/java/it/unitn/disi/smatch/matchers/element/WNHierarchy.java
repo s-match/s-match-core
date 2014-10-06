@@ -32,7 +32,7 @@ public class WNHierarchy implements ISenseGlossBasedElementLevelSemanticMatcher 
      * @param target gloss of target label
      * @return synonym or IDK relation
      */
-    public char match(ISense source, ISense target) throws MatcherLibraryException {
+    public char match(ISense source, ISense target) throws ElementMatcherException {
         List<ISense> sourceList = getAncestors(source, depth);
         List<ISense> targetList = getAncestors(target, depth);
         targetList.retainAll(sourceList);
@@ -42,11 +42,11 @@ public class WNHierarchy implements ISenseGlossBasedElementLevelSemanticMatcher 
             return IMappingElement.IDK;
     }
 
-    private List<ISense> getAncestors(ISense node, int depth) throws MatcherLibraryException {
+    private List<ISense> getAncestors(ISense node, int depth) throws ElementMatcherException {
         try {
             return node.getParents(depth);
         } catch (LinguisticOracleException e) {
-            throw new MatcherLibraryException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 }

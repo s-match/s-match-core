@@ -12,7 +12,6 @@ import java.util.*;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-@SuppressWarnings({"unchecked"})
 public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends IndexedObject implements IBaseNode<E, I>, IBaseNodeData {
 
     protected E parent;
@@ -50,6 +49,7 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
             return current.hasParent();
         }
 
+        @SuppressWarnings({"unchecked"})
         public E next() {
             current = (E) current.getParent();
             return current;
@@ -61,27 +61,68 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
     }
 
     class BreadthFirstSearch implements Iterator<E> {
-        private Deque<E> queue;
+        private final Deque<E> queue;
 
+        @SuppressWarnings({"unchecked"})
         public BreadthFirstSearch(E start) {
             if (null == start) {
-                throw new IllegalArgumentException("argument is null");
+                throw new IllegalArgumentException("start is required");
             }
-            queue = new ArrayDeque<>();
-            queue.addFirst(start);
-            next();
+            this.queue = new ArrayDeque<>();
+            this.queue.addAll(start.getChildrenList());
         }
 
         public boolean hasNext() {
             return !queue.isEmpty();
         }
 
+        @SuppressWarnings({"unchecked"})
         public E next() {
-            E current = queue.removeFirst();
-            for (Iterator<E> i = current.getChildren(); i.hasNext();) {
-                queue.add(i.next());
+            E current = queue.pollFirst();
+            if (null != current) {
+                this.queue.addAll(current.getChildrenList());
+            } else {
+                throw new NoSuchElementException();
             }
             return current;
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    class DepthFirstSearch implements Iterator<E> {
+        private final Deque<E> queue;
+
+        @SuppressWarnings("unchecked")
+        public DepthFirstSearch(E start) {
+            if (null == start) {
+                throw new IllegalArgumentException("start is required");
+            }
+            this.queue = new ArrayDeque<>();
+
+            for (int i = start.getChildCount() - 1; 0 <= i; i--) {
+                queue.addFirst((E) start.getChildAt(i));
+            }
+        }
+
+        public boolean hasNext() {
+            return !queue.isEmpty();
+        }
+
+        @SuppressWarnings({"unchecked"})
+        public E next() {
+            E current = queue.pollFirst();
+            if (null != current) {
+                for (int i = current.getChildCount() - 1; 0 <= i; i--) {
+                    queue.addFirst((E) current.getChildAt(i));
+                }
+
+                return current;
+            } else {
+                throw new NoSuchElementException();
+            }
         }
 
         public void remove() {
@@ -123,6 +164,7 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         this.name = name;
     }
 
+    @Override
     public E getChildAt(int index) {
         if (children == null) {
             throw new ArrayIndexOutOfBoundsException("node has no children");
@@ -130,6 +172,7 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         return children.get(index);
     }
 
+    @Override
     public int getChildCount() {
         if (children == null) {
             return 0;
@@ -138,6 +181,7 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
     }
 
+    @Override
     public int getChildIndex(E child) {
         if (null == child) {
             throw new IllegalArgumentException("argument is null");
@@ -149,6 +193,7 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         return children.indexOf(child);
     }
 
+    @Override
     public Iterator<E> getChildren() {
         if (null == children) {
             return Collections.<E>emptyList().iterator();
@@ -157,6 +202,7 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
     }
 
+    @Override
     public List<E> getChildrenList() {
         if (null != children) {
             return Collections.unmodifiableList(children);
@@ -165,22 +211,29 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public E createChild() {
         E child = (E) new BaseNode<E, I>();
         addChild(child);
         return child;
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public E createChild(String name) {
         E child = (E) new BaseNode<E, I>(name);
         addChild(child);
         return child;
     }
 
+    @Override
     public void addChild(E child) {
         addChild(getChildCount(), child);
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public void addChild(int index, E child) {
         if (null == child) {
             throw new IllegalArgumentException("new child is null");
@@ -202,6 +255,8 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         fireTreeStructureChanged((E) this);
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public void removeChild(int index) {
         E child = getChildAt(index);
         children.remove(index);
@@ -209,6 +264,7 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         child.setParent(null);
     }
 
+    @Override
     public void removeChild(E child) {
         if (null == child) {
             throw new IllegalArgumentException("argument is null");
@@ -219,19 +275,24 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
     }
 
+    @Override
     public E getParent() {
         return parent;
     }
 
+    @Override
     public void setParent(E newParent) {
         removeFromParent();
         parent = newParent;
     }
 
+    @Override
     public boolean hasParent() {
         return null != parent;
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public void removeFromParent() {
         if (null != parent) {
             parent.removeChild(this);
@@ -239,10 +300,12 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
     }
 
+    @Override
     public boolean isLeaf() {
         return 0 == getChildCount();
     }
 
+    @Override
     public int getAncestorCount() {
         if (-1 == ancestorCount) {
             if (null == ancestors) {
@@ -257,10 +320,14 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         return ancestorCount;
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public Iterator<E> getAncestors() {
         return new Ancestors((E) this);
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public List<E> getAncestorsList() {
         if (null == ancestors) {
             ancestors = new ArrayList<>(getAncestorCount());
@@ -272,10 +339,12 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         return Collections.unmodifiableList(ancestors);
     }
 
+    @Override
     public int getLevel() {
         return getAncestorCount();
     }
 
+    @Override
     public int getDescendantCount() {
         if (-1 == descendantCount) {
             if (null == descendants) {
@@ -291,10 +360,14 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         return descendantCount;
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public Iterator<E> getDescendants() {
-        return new BreadthFirstSearch((E) this);
+        return new DepthFirstSearch((E) this);
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public List<E> getDescendantsList() {
         if (null == descendants) {
             descendants = new ArrayList<>(getChildCount());
@@ -309,14 +382,18 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         return Collections.unmodifiableList(descendants);
     }
 
+    @SuppressWarnings({"unchecked"})
     public Iterator<E> getSubtree() {
         return new StartIterator<>((E) this, getDescendants());
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public I getNodeData() {
         return (I) this;
     }
 
+    @SuppressWarnings({"unchecked"})
     private boolean isNodeAncestor(E anotherNode) {
         if (null == anotherNode) {
             return false;
@@ -345,34 +422,43 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String newName) {
         name = newName;
     }
 
+    @Override
     public String getId() {
         return id;
     }
 
+    @Override
     public void setId(String newId) {
         id = newId;
     }
 
+    @Override
     public Object getUserObject() {
         return userObject;
     }
 
+    @Override
     public void setUserObject(Object object) {
         userObject = object;
     }
 
+    @Override
     public String toString() {
         return name;
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public int getIndex(TreeNode node) {
         if (node instanceof IBaseNode) {
             return getChildIndex((E) node);
@@ -381,36 +467,45 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
     }
 
+    @Override
     public boolean getAllowsChildren() {
         return true;
     }
 
+    @Override
     public Enumeration children() {
         return Collections.enumeration(children);
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public void insert(MutableTreeNode child, int index) {
         if (child instanceof IBaseNode) {
             addChild(index, (E) child);
         }
     }
 
+    @Override
     public void remove(int index) {
         removeChild(index);
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public void remove(MutableTreeNode node) {
         if (node instanceof IBaseNode) {
             removeChild((E) node);
         }
     }
 
+    @Override
     public void setParent(MutableTreeNode newParent) {
         if (newParent instanceof IBaseNode) {
             setParent(newParent);
         }
     }
 
+    @Override
     public void addTreeStructureChangedListener(IBaseTreeStructureChangedListener<E> l) {
         if (null == listenerList) {
             listenerList = new EventListenerList();
@@ -418,12 +513,15 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         listenerList.add(IBaseTreeStructureChangedListener.class, l);
     }
 
+    @Override
     public void removeTreeStructureChangedListener(IBaseTreeStructureChangedListener<E> l) {
         if (null != listenerList) {
             listenerList.remove(IBaseTreeStructureChangedListener.class, l);
         }
     }
 
+    @Override
+    @SuppressWarnings({"unchecked"})
     public void fireTreeStructureChanged(E node) {
         descendants = null;
         if (null != listenerList) {
@@ -440,17 +538,6 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
         if (null != parent) {
             parent.fireTreeStructureChanged(node);
-        }
-    }
-
-    public void trim() {
-        if (null != children) {
-            children.trimToSize();
-            for (IBaseNode child : children) {
-                if (child instanceof BaseNode) {
-                    ((BaseNode) child).trim();
-                }
-            }
         }
     }
 }

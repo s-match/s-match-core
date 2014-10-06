@@ -1,5 +1,6 @@
 package it.unitn.disi.smatch.loaders.context;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.trees.Context;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
@@ -15,7 +16,7 @@ import java.util.ArrayList;
  * Loads context from a tab-separated file. Expects a single-rooted hierarchy, otherwise adds an artificial "Top" node.
  * Each line of the file should contain one label, indented with a number of tabs equal to the level of the node.
  * For example:
- * <p/>
+ * <pre>
  * Courses
  * \tCollege of Arts and Sciences
  * \t\tEarth and Atmospheric Sciences
@@ -24,26 +25,33 @@ import java.util.ArrayList;
  * \t\t\tAmerica History
  * \t\t\tAncient European History
  * \t\tComputer Science
+ * </pre>
  *
  * @author Mikalai Yatskevich mikalai.yatskevich@comlab.ox.ac.uk
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  * @author Juan Pane pane@disi.unitn.it
  */
-public class TabContextLoader extends BaseFileContextLoader<IContext> implements IContextLoader {
+public class TabContextLoader extends BaseFileContextLoader<IContext, INode> implements IContextLoader, IAsyncContextLoader {
 
     private static final Logger log = LoggerFactory.getLogger(TabContextLoader.class);
+
+    public TabContextLoader() {
+    }
+
+    public TabContextLoader(String location) {
+        super(location);
+    }
 
     @Override
     protected IContext process(BufferedReader input) throws IOException {
         IContext result = new Context();
         ArrayList<INode> rootPath = new ArrayList<>();
 
-        int nodesParsed = 0;
         //loads the root node
         final String rootName = input.readLine();
         if (null != rootName) {
             INode rootNode = result.createRoot(rootName);
-            nodesParsed++;
+            setProgress(getProgress() + 1);
             rootPath.add(rootNode);
 
             int artificialLevel = 0;//flags that we added Top and need an increment in level
@@ -52,7 +60,8 @@ public class TabContextLoader extends BaseFileContextLoader<IContext> implements
             String line;
             while ((line = input.readLine()) != null &&
                     !line.startsWith("#") &&
-                    !line.isEmpty()) {
+                    !line.isEmpty() &&
+                    !Thread.currentThread().isInterrupted()) {
 
                 int int_depth = numOfTabs(line);
                 String name = line.substring(int_depth);
@@ -81,11 +90,21 @@ public class TabContextLoader extends BaseFileContextLoader<IContext> implements
                     old_depth = int_depth;
                 }
 
-                nodesParsed++;
+                setProgress(getProgress() + 1);
             }
         }
-        log.info("Parsed nodes:\t" + nodesParsed);
+
+        if (Thread.currentThread().isInterrupted()) {
+            result = null;
+        } else {
+            log.info("Parsed nodes: " + getProgress());
+        }
         return result;
+    }
+
+    @Override
+    public AsyncTask<IContext, INode> asyncLoad(String location) {
+        return new TabContextLoader(location);
     }
 
     /**

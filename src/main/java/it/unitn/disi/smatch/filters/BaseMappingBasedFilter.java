@@ -22,14 +22,31 @@ public abstract class BaseMappingBasedFilter extends BaseFilter {
 
     protected BaseMappingBasedFilter(IMappingFactory mappingFactory, IMappingLoader mappingLoader, String mappingLocation) {
         super(mappingFactory);
+
+        if (null == mappingLoader) {
+            throw new IllegalArgumentException("mappingLoader required!");
+        }
+        if (null == mappingLocation) {
+            throw new IllegalArgumentException("mappingLocation required!");
+        }
         this.mappingLoader = mappingLoader;
         this.mappingLocation = mappingLocation;
     }
 
-    public abstract IContextMapping<INode> filter(IContextMapping<INode> mapping) throws MappingFilterException;
+    protected BaseMappingBasedFilter(IMappingFactory mappingFactory, IMappingLoader mappingLoader, String mappingLocation, IContextMapping<INode> mapping) {
+        super(mappingFactory, mapping);
+
+        if (null == mappingLoader) {
+            throw new IllegalArgumentException("mappingLoader required!");
+        }
+        if (null == mappingLocation) {
+            throw new IllegalArgumentException("mappingLocation required!");
+        }
+        this.mappingLoader = mappingLoader;
+        this.mappingLocation = mappingLocation;
+    }
 
     protected IContextMapping<INode> loadMapping(IContextMapping<INode> mapping) throws MappingFilterException {
-        //load the mapping
         try {
             log.debug("Loading filter mapping...");
             return mappingLoader.loadMapping(mapping.getSourceContext(), mapping.getTargetContext(), mappingLocation);

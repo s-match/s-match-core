@@ -1,5 +1,8 @@
 package it.unitn.disi.smatch.loaders.mapping;
 
+import it.unitn.disi.smatch.async.AsyncTask;
+import it.unitn.disi.smatch.data.mappings.IContextMapping;
+import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
@@ -8,18 +11,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Loads the mapping consisting of only leaf nodes. Sometimes happens in thesauri.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class PlainLeafLoader extends PlainMappingLoader {
+public class PlainLeafMappingLoader extends PlainMappingLoader {
 
-    private static final Logger log = LoggerFactory.getLogger(PlainLeafLoader.class);
+    private static final Logger log = LoggerFactory.getLogger(PlainLeafMappingLoader.class);
 
-    protected PlainLeafLoader(IMappingFactory mappingFactory) {
+    public PlainLeafMappingLoader(IMappingFactory mappingFactory) {
         super(mappingFactory);
+    }
+
+    public PlainLeafMappingLoader(IMappingFactory mappingFactory, IContext source, IContext target, String fileName) {
+        super(mappingFactory, source, target, fileName);
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>> asyncLoad(IContext source, IContext target, String fileName) {
+        return new PlainLeafMappingLoader(mappingFactory, source, target, fileName);
     }
 
     /**
@@ -32,7 +45,8 @@ public class PlainLeafLoader extends PlainMappingLoader {
         HashMap<String, INode> result = new HashMap<>();
 
         int nodeCount = 0;
-        for (INode node : context.getNodesList()) {
+        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+            INode node = i.next();
             result.put("\\Top\\" + node.getNodeData().getName(), node);
             result.put(node.getNodeData().getName(), node);
             nodeCount++;

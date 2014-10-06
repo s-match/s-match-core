@@ -1,10 +1,11 @@
 package it.unitn.disi.smatch.loaders.mapping;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
+import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
-import it.unitn.disi.smatch.data.util.MappingProgressContainer;
 import it.unitn.disi.smatch.loaders.ILoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,29 +13,42 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Loads the mapping as written by {@link it.unitn.disi.smatch.renderers.mapping.PlainMappingRenderer}.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class PlainMappingLoader extends BaseFileMappingLoader {
+public class PlainMappingLoader extends BaseFileMappingLoader implements IAsyncMappingLoader {
 
     private static final Logger log = LoggerFactory.getLogger(PlainMappingLoader.class);
 
-    protected PlainMappingLoader(IMappingFactory mappingFactory) {
+    public PlainMappingLoader(IMappingFactory mappingFactory) {
         super(mappingFactory);
     }
 
+    public PlainMappingLoader(IMappingFactory mappingFactory, IContext source, IContext target, String fileName) {
+        super(mappingFactory, source, target, fileName);
+    }
+
     @Override
-    protected void process(IContextMapping<INode> mapping, IContext source, IContext target, BufferedReader reader, MappingProgressContainer progressContainer) throws IOException {
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>>
+    asyncLoad(IContext source, IContext target, String fileName) {
+        return new PlainMappingLoader(mappingFactory, source, target, fileName);
+    }
+
+    @Override
+    protected IContextMapping<INode> process(IContext source, IContext target, BufferedReader reader) throws IOException {
+        IContextMapping<INode> mapping = mappingFactory.getContextMappingInstance(source, target);
         HashMap<String, INode> sNodes = createHash(source);
         HashMap<String, INode> tNodes = createHash(target);
 
         String line;
         while ((line = reader.readLine()) != null &&
                 !line.startsWith("#") &&
-                !line.isEmpty()) {
+                !line.isEmpty() &&
+                !Thread.currentThread().isInterrupted()) {
 
             INode sourceNode;
             INode targetNode;
@@ -65,8 +79,7 @@ public class PlainMappingLoader extends BaseFileMappingLoader {
 
                 if ((null != sourceNode) && (null != targetNode)) {
                     mapping.setRelation(sourceNode, targetNode, rel);
-                    progressContainer.countRelation(rel);
-                    progressContainer.progress();
+                    progress();
                 } else {
                     if (log.isWarnEnabled()) {
                         log.warn("Could not find mapping: " + line);
@@ -74,6 +87,11 @@ public class PlainMappingLoader extends BaseFileMappingLoader {
                 }
             }
         }
+
+        if (Thread.currentThread().isInterrupted()) {
+            mapping = null;
+        }
+        return mapping;
     }
 
     /**
@@ -107,7 +125,8 @@ public class PlainMappingLoader extends BaseFileMappingLoader {
         HashMap<String, INode> result = new HashMap<>();
 
         int nodeCount = 0;
-        for (INode node : context.getNodesList()) {
+        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+            INode node = i.next();
             result.put(getNodePathToRoot(node), node);
             nodeCount++;
         }

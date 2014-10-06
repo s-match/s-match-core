@@ -1,9 +1,9 @@
 package it.unitn.disi.smatch.renderers.mapping;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.trees.INode;
-import it.unitn.disi.smatch.data.util.MappingProgressContainer;
 import it.unitn.disi.smatch.loaders.ILoader;
 
 import java.io.BufferedWriter;
@@ -17,19 +17,35 @@ import java.util.ArrayList;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class TabPathMappingRenderer extends BaseFileMappingRenderer implements IMappingRenderer {
+public class TabPathMappingRenderer extends BaseFileMappingRenderer implements IMappingRenderer, IAsyncMappingRenderer {
+
+    public TabPathMappingRenderer() {
+        super(null, null);
+    }
+
+    public TabPathMappingRenderer(String location, IContextMapping<INode> mapping) {
+        super(location, mapping);
+    }
 
     @Override
-    protected void process(IContextMapping<INode> mapping, BufferedWriter out, MappingProgressContainer progressContainer) throws IOException {
+    public AsyncTask<Void, IMappingElement<INode>> asyncRender(IContextMapping<INode> mapping, String location) {
+        return new TabPathMappingRenderer(location, mapping);
+    }
+
+    @Override
+    protected void process(IContextMapping<INode> mapping, BufferedWriter out) throws IOException {
         for (IMappingElement<INode> mappingElement : mapping) {
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+
             String sourceConceptName = getPathToRoot(mappingElement.getSource());
             String targetConceptName = getPathToRoot(mappingElement.getTarget());
             char relation = mappingElement.getRelation();
 
             out.write(sourceConceptName + "\t\t" + relation + "\t\t" + targetConceptName + "\n");
 
-            progressContainer.countRelation(relation);
-            progressContainer.progress();
+            progress();
         }
     }
 

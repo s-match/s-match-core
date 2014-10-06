@@ -2,8 +2,8 @@ package it.unitn.disi.smatch.matchers.element.gloss;
 
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
+import it.unitn.disi.smatch.matchers.element.ElementMatcherException;
 import it.unitn.disi.smatch.matchers.element.ISenseGlossBasedElementLevelSemanticMatcher;
-import it.unitn.disi.smatch.matchers.element.MatcherLibraryException;
 
 import java.util.List;
 import java.util.StringTokenizer;
@@ -51,7 +51,7 @@ public class WNGloss implements ISenseGlossBasedElementLevelSemanticMatcher {
      * @param target gloss of target
      * @return more general, less general or IDK relation
      */
-    public char match(ISense source, ISense target) throws MatcherLibraryException {
+    public char match(ISense source, ISense target) throws ElementMatcherException {
         String sSynset = source.getGloss();
         String tSynset = target.getGloss();
         StringTokenizer stSource = new StringTokenizer(sSynset, " ,.\"'();");

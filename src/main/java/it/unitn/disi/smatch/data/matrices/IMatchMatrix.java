@@ -9,14 +9,6 @@ package it.unitn.disi.smatch.data.matrices;
 public interface IMatchMatrix {
 
     /**
-     * Inits a matrix x rows per y columns.
-     *
-     * @param x rows count
-     * @param y column count
-     */
-    void init(int x, int y);
-
-    /**
      * Returns an element.
      *
      * @param x row

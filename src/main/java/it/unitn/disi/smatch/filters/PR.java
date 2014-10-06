@@ -1,14 +1,18 @@
 package it.unitn.disi.smatch.filters;
 
+import it.unitn.disi.smatch.async.AsyncTask;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
+import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.INode;
+import it.unitn.disi.smatch.loaders.mapping.IAsyncMappingLoader;
 import it.unitn.disi.smatch.loaders.mapping.IMappingLoader;
 import it.unitn.disi.smatch.loaders.mapping.MappingLoaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Computes precision and recall using positive and negative parts of the golden standard. Needs the
@@ -27,7 +31,7 @@ import java.text.DecimalFormat;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class PR extends BaseFilter {
+public class PR extends BaseFilter implements IAsyncMappingFilter {
 
     private static final Logger log = LoggerFactory.getLogger(PR.class);
 
@@ -35,28 +39,79 @@ public class PR extends BaseFilter {
 
     protected final String[] mappingLocations;
 
-    public PR(IMappingFactory mappingFactory, IMappingLoader mappingLoader, String mappingLocation) {
+    public PR(IMappingFactory mappingFactory, IMappingLoader mappingLoader, String mappingLocations) {
         super(mappingFactory);
-        this.mappingLoader = mappingLoader;
-        this.mappingLocations = mappingLocation.split(";");
 
+        if (null == mappingLoader) {
+            throw new IllegalArgumentException("mappingLoader required!");
+        }
+        this.mappingLoader = mappingLoader;
+        if (null == mappingLocations) {
+            throw new IllegalArgumentException("mappingLocations required!");
+        }
+        this.mappingLocations = mappingLocations.split(";");
+    }
+
+    public PR(IMappingFactory mappingFactory, IMappingLoader mappingLoader, String[] mappingLocations, IContextMapping<INode> mapping) {
+        super(mappingFactory, mapping);
+
+        if (null == mappingLoader) {
+            throw new IllegalArgumentException("mappingLoader required!");
+        }
+        this.mappingLoader = mappingLoader;
+        if (null == mappingLocations) {
+            throw new IllegalArgumentException("mappingLocations required!");
+        }
+        this.mappingLocations = mappingLocations;
     }
 
     @SuppressWarnings("unchecked")
-    public IContextMapping<INode> filter(IContextMapping<INode> mapping) throws MappingFilterException {
-        IContextMapping<INode>[] filterMappings = (IContextMapping<INode>[]) new IContextMapping[2];
-        //load the mapping
+    protected IContextMapping<INode> process(IContextMapping<INode> mapping) throws MappingFilterException {
+        IContextMapping<INode>[] filterMappings = new IContextMapping[2];
+        // load the mappings
         try {
+            AsyncTask<IContextMapping<INode>, IMappingElement<INode>>[] tasks = new AsyncTask[2];
             log.debug("Loading positive mapping...");
-            filterMappings[0] = mappingLoader.loadMapping(mapping.getSourceContext(), mapping.getTargetContext(), mappingLocations[0]);
-            log.debug("Loaded positive mapping...");
+            if (mappingLoader instanceof IAsyncMappingLoader) {
+                AsyncTask<IContextMapping<INode>, IMappingElement<INode>> task =
+                        ((IAsyncMappingLoader) mappingLoader).asyncLoad(
+                                mapping.getSourceContext(), mapping.getTargetContext(), mappingLocations[0]);
+                task.execute();
+                tasks[0] = task;
+            } else {
+                filterMappings[0] = mappingLoader.loadMapping(mapping.getSourceContext(), mapping.getTargetContext(), mappingLocations[0]);
+                log.debug("Loaded positive mapping...");
+            }
 
             if (1 < mappingLocations.length) {
                 log.debug("Loading negative mapping...");
-                filterMappings[1] = mappingLoader.loadMapping(mapping.getSourceContext(), mapping.getTargetContext(), mappingLocations[1]);
-                log.debug("Loaded negative mapping...");
+                if (mappingLoader instanceof IAsyncMappingLoader) {
+                    AsyncTask<IContextMapping<INode>, IMappingElement<INode>> task =
+                            ((IAsyncMappingLoader) mappingLoader).asyncLoad(
+                                    mapping.getSourceContext(), mapping.getTargetContext(), mappingLocations[1]);
+                    task.execute();
+                    tasks[1] = task;
+                } else {
+                    filterMappings[1] = mappingLoader.loadMapping(mapping.getSourceContext(), mapping.getTargetContext(), mappingLocations[1]);
+                    log.debug("Loaded negative mapping...");
+                }
             }
-        } catch (MappingLoaderException e) {
+
+            if (mappingLoader instanceof IAsyncMappingLoader) {
+                filterMappings[0] = tasks[0].get();
+                log.debug("Loaded positive mapping...");
+                if (1 < mappingLocations.length) {
+                    filterMappings[1] = tasks[1].get();
+                    log.debug("Loaded negative mapping...");
+                }
+            }
+            if (log.isTraceEnabled()) {
+                countRelationStats(filterMappings[0]);
+                if (1 < mappingLocations.length) {
+                    countRelationStats(filterMappings[1]);
+                }
+            }
+        } catch (MappingLoaderException | InterruptedException | ExecutionException e) {
             throw new MappingFilterException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
 
@@ -103,5 +158,10 @@ public class PR extends BaseFilter {
         }
 
         return mapping;
+    }
+
+    @Override
+    public AsyncTask<IContextMapping<INode>, IMappingElement<INode>> asyncFilter(IContextMapping<INode> mapping) {
+        return new PR(mappingFactory, mappingLoader, mappingLocations, mapping);
     }
 }

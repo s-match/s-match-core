@@ -93,7 +93,7 @@ public class MiscUtils {
     }
 
     /**
-     * Returns <code>OutputStream</code> as in {@link java.net.URL#openConnection().openStream()}, but supports also
+     * Returns <code>OutputStream</code> as in {@link java.net.URL#openStream()}, but supports also
      * "classpath://" scheme.
      *
      * @param url resource location

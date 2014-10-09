@@ -50,9 +50,9 @@ import java.util.List;
  * Here is how one can do this using {@code AccumulativeRunnable}:
  * <pre>{@code
  * AccumulativeRunnable<String> doSetTextImpl =
- * new  AccumulativeRunnable<String>() {
+ * new AccumulativeRunnable<String>() {
  *     @Override
- *     protected void run(List&lt;String&gt; args) {
+ *     protected void run(List<String> args) {
  *         //set to the last string being passed
  *         setTextImpl(args.get(args.size() - 1));
  *     }
@@ -60,13 +60,13 @@ import java.util.List;
  * void setText(String text) {
  *     //add text and send for the execution if needed.
  *     doSetTextImpl.add(text);
- * }}
+ * }
+ * }
  * </pre>
- *
  * <p>
  * Say we want want to implement addDirtyRegion(Rectangle rect)
  * which sends this region to the
- * handleDirtyRegions(List<Rect> regiouns) on the EDT.
+ * handleDirtyRegions(List<Rect> regions) on the EDT.
  * addDirtyRegions better be accumulated before handling on the EDT.
  *
  * <p>
@@ -81,7 +81,8 @@ import java.util.List;
  *     };
  *  void addDirtyRegion(Rectangle rect) {
  *      doHandleDirtyRegions.add(rect);
- *  }}
+ *  }
+ *  }
  * </pre>
  *
  * @author Igor Kushnirskiy
@@ -116,7 +117,7 @@ public abstract class AccumulativeRunnable<T> implements Runnable {
      * appends arguments and sends this {@code Runnable} for the
      * execution if needed.
      * <p>
-     * This implementation uses {@see #submit} to send this
+     * This implementation uses {@code submit()} to send this
      * {@code Runnable} for execution.
      * @param args the arguments to accumulate
      */

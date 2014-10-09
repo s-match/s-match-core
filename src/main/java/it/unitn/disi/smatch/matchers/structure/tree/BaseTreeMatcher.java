@@ -47,8 +47,8 @@ public abstract class BaseTreeMatcher extends AsyncTask<IContextMapping<INode>, 
         try {
             Thread.currentThread().setName(Thread.currentThread().getName()
                     + " [" + this.getClass().getSimpleName()
-                    + ": source.size=" + sourceContext.getNodesCount()
-                    + ", target.size=" + targetContext.getNodesCount() + "]");
+                    + ": source.size=" + sourceContext.nodesCount()
+                    + ", target.size=" + targetContext.nodesCount() + "]");
 
             return treeMatch(sourceContext, targetContext, acolMapping);
         } finally {

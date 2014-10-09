@@ -54,7 +54,7 @@ public class TabPathMappingRenderer extends BaseFileMappingRenderer implements I
         ArrayList<String> path = new ArrayList<>();
         INode curNode = node;
         while (null != curNode) {
-            path.add(0, curNode.getNodeData().getName());
+            path.add(0, curNode.nodeData().getName());
             curNode = curNode.getParent();
         }
         for (int i = 0; i < path.size(); i++) {

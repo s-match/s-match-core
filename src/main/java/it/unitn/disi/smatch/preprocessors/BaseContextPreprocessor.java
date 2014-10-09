@@ -27,7 +27,7 @@ public abstract class BaseContextPreprocessor extends AsyncTask<Void, INode> imp
         final String threadName = Thread.currentThread().getName();
         try {
             Thread.currentThread().setName(Thread.currentThread().getName()
-                    + " [" + this.getClass().getSimpleName() + ": context.size=" + context.getNodesCount() + "]");
+                    + " [" + this.getClass().getSimpleName() + ": context.size=" + context.nodesCount() + "]");
 
             preprocess(context);
             return null;

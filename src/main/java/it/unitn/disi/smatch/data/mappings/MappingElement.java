@@ -1,11 +1,13 @@
 package it.unitn.disi.smatch.data.mappings;
 
+import java.io.Serializable;
+
 /**
  * Mapping element implementation.
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class MappingElement<T> implements IMappingElement<T> {
+public class MappingElement<T> implements IMappingElement<T>, Serializable {
 
     protected T source;
     protected T target;
@@ -17,18 +19,22 @@ public class MappingElement<T> implements IMappingElement<T> {
         this.relation = relation;
     }
 
+    @Override
     public T getSource() {
         return source;
     }
 
+    @Override
     public T getTarget() {
         return target;
     }
 
+    @Override
     public char getRelation() {
         return relation;
     }
 
+    @Override
     public int hashCode() {
         int result;
         result = (source != null ? source.hashCode() : 0);
@@ -37,6 +43,7 @@ public class MappingElement<T> implements IMappingElement<T> {
         return result;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

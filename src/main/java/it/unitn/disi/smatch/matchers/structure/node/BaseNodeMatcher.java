@@ -40,13 +40,13 @@ public abstract class BaseNodeMatcher {
                                        INode sourceNode, INode targetNode) {
         StringBuilder axioms = new StringBuilder();
         Integer numberOfClauses = 0;
-        // create DIMACS variables for all acols in the matching task
+        // create DIMACS variables for all concepts in the matching task
         createVariables(hashConceptNumber, sourceACoLs, sourceNode);
         createVariables(hashConceptNumber, targetACoLs, targetNode);
 
-        for (Iterator<IAtomicConceptOfLabel> i = sourceNode.getNodeData().pathToRootACoLs(); i.hasNext(); ) {
+        for (Iterator<IAtomicConceptOfLabel> i = sourceNode.nodeData().pathToRootConceptIterator(); i.hasNext(); ) {
             IAtomicConceptOfLabel sourceACoL = i.next();
-            for (Iterator<IAtomicConceptOfLabel> j = targetNode.getNodeData().pathToRootACoLs(); j.hasNext(); ) {
+            for (Iterator<IAtomicConceptOfLabel> j = targetNode.nodeData().pathToRootConceptIterator(); j.hasNext(); ) {
                 IAtomicConceptOfLabel targetACoL = j.next();
                 char relation = acolMapping.getRelation(sourceACoL, targetACoL);
                 if (IMappingElement.IDK != relation) {
@@ -103,7 +103,7 @@ public abstract class BaseNodeMatcher {
     private static void createVariables(Map<IAtomicConceptOfLabel, String> hashConceptNumber,
                                         Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
         cacheACoLs(acolsMap, node);
-        for (Iterator<IAtomicConceptOfLabel> i = node.getNodeData().pathToRootACoLs(); i.hasNext(); ) {
+        for (Iterator<IAtomicConceptOfLabel> i = node.nodeData().pathToRootConceptIterator(); i.hasNext(); ) {
             IAtomicConceptOfLabel acol = i.next();
             // create corresponding to id variable number
             // and put it as a value of hash table with key equal to ACoL
@@ -114,7 +114,7 @@ public abstract class BaseNodeMatcher {
     }
 
     private static void cacheACoLs(Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
-        // without acols can't check the map, so by default check path to root
+        // without concepts can't check the map, so by default check path to root
         boolean cached = isNodeCached(acolsMap, node);
         if (!cached) {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -127,8 +127,8 @@ public abstract class BaseNodeMatcher {
                     }
 
                     // cache acol ids for node
-                    for (IAtomicConceptOfLabel acol : node.getNodeData().getACoLsList()) {
-                        acolsMap.put(node.getNodeData().getId() + "_" + Integer.toString(acol.getId()), acol);
+                    for (IAtomicConceptOfLabel acol : node.nodeData().getConcepts()) {
+                        acolsMap.put(node.nodeData().getId() + "_" + Integer.toString(acol.getId()), acol);
                     }
                 }
             }
@@ -137,19 +137,19 @@ public abstract class BaseNodeMatcher {
 
     private static boolean isNodeCached(Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
         boolean cached;
-        if (0 == node.getNodeData().getACoLCount()) {
+        if (node.nodeData().getConcepts().isEmpty()) {
             cached = false;
         } else {
             // if last acol cached - all preceding are cached too
-            String key = node.getNodeData().getId() +
-                    "_" + Integer.toString(node.getNodeData().getACoLAt(node.getNodeData().getACoLCount() - 1).getId());
+            String key = node.nodeData().getId() +
+                    "_" + Integer.toString(node.nodeData().getConcepts().get(node.nodeData().getConcepts().size() - 1).getId());
             cached = acolsMap.containsKey(key);
         }
         return cached;
     }
 
     /**
-     * Parses a c@node formula replacing references to acols with references to the DIMACS variables. Uses and depends
+     * Parses a c@node formula replacing references to concepts with references to the DIMACS variables. Uses and depends
      * on CNF representation which is "conjunction of disjunctions",  that is the first level list represents
      * conjunction of second-level lists representing disjunction clauses.
      *
@@ -162,7 +162,7 @@ public abstract class BaseNodeMatcher {
                                                         Map<String, IAtomicConceptOfLabel> acolsMap, INode node) {
         ArrayList<ArrayList<String>> representation = new ArrayList<>();
         boolean saved_negation = false;
-        for (StringTokenizer clauseTokenizer = new StringTokenizer(node.getNodeData().getcNodeFormula(), "&"); clauseTokenizer.hasMoreTokens(); ) {
+        for (StringTokenizer clauseTokenizer = new StringTokenizer(node.nodeData().getNodeFormula(), "&"); clauseTokenizer.hasMoreTokens(); ) {
             String clause = clauseTokenizer.nextToken();
             ArrayList<String> clause_vec = new ArrayList<>();
             for (StringTokenizer varTokenizer = new StringTokenizer(clause, "|() "); varTokenizer.hasMoreTokens(); ) {

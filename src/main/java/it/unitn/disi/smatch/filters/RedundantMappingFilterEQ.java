@@ -40,24 +40,24 @@ public class RedundantMappingFilterEQ extends RedundantMappingFilter {
     // and then all the rest is not removed because of the "gap"
 
     protected boolean verifyCondition1(IContextMapping<INode> mapping, IMappingElement<INode> e) {
-        return findRelation(IMappingElement.LESS_GENERAL, e.getSource().getAncestors(), e.getTarget(), mapping) ||
-                findRelation(IMappingElement.EQUIVALENCE, e.getSource().getAncestors(), e.getTarget(), mapping) ||
+        return findRelation(IMappingElement.LESS_GENERAL, e.getSource().ancestorsIterator(), e.getTarget(), mapping) ||
+                findRelation(IMappingElement.EQUIVALENCE, e.getSource().ancestorsIterator(), e.getTarget(), mapping) ||
 
-                findRelation(IMappingElement.LESS_GENERAL, e.getSource(), e.getTarget().getDescendants(), mapping) ||
-                findRelation(IMappingElement.EQUIVALENCE, e.getSource(), e.getTarget().getDescendants(), mapping) ||
+                findRelation(IMappingElement.LESS_GENERAL, e.getSource(), e.getTarget().descendantsIterator(), mapping) ||
+                findRelation(IMappingElement.EQUIVALENCE, e.getSource(), e.getTarget().descendantsIterator(), mapping) ||
 
-                findRelation(IMappingElement.LESS_GENERAL, e.getSource().getAncestors(), e.getTarget().getDescendants(), mapping) ||
-                findRelation(IMappingElement.EQUIVALENCE, e.getSource().getAncestors(), e.getTarget().getDescendants(), mapping);
+                findRelation(IMappingElement.LESS_GENERAL, e.getSource().ancestorsIterator(), e.getTarget().descendantsIterator(), mapping) ||
+                findRelation(IMappingElement.EQUIVALENCE, e.getSource().ancestorsIterator(), e.getTarget().descendantsIterator(), mapping);
     }
 
     protected boolean verifyCondition2(IContextMapping<INode> mapping, IMappingElement<INode> e) {
-        return findRelation(IMappingElement.MORE_GENERAL, e.getSource(), e.getTarget().getAncestors(), mapping) ||
-                findRelation(IMappingElement.EQUIVALENCE, e.getSource(), e.getTarget().getAncestors(), mapping) ||
+        return findRelation(IMappingElement.MORE_GENERAL, e.getSource(), e.getTarget().ancestorsIterator(), mapping) ||
+                findRelation(IMappingElement.EQUIVALENCE, e.getSource(), e.getTarget().ancestorsIterator(), mapping) ||
 
-                findRelation(IMappingElement.MORE_GENERAL, e.getSource().getDescendants(), e.getTarget(), mapping) ||
-                findRelation(IMappingElement.EQUIVALENCE, e.getSource().getDescendants(), e.getTarget(), mapping) ||
+                findRelation(IMappingElement.MORE_GENERAL, e.getSource().descendantsIterator(), e.getTarget(), mapping) ||
+                findRelation(IMappingElement.EQUIVALENCE, e.getSource().descendantsIterator(), e.getTarget(), mapping) ||
 
-                findRelation(IMappingElement.MORE_GENERAL, e.getSource().getDescendants(), e.getTarget().getAncestors(), mapping) ||
-                findRelation(IMappingElement.EQUIVALENCE, e.getSource().getDescendants(), e.getTarget().getAncestors(), mapping);
+                findRelation(IMappingElement.MORE_GENERAL, e.getSource().descendantsIterator(), e.getTarget().ancestorsIterator(), mapping) ||
+                findRelation(IMappingElement.EQUIVALENCE, e.getSource().descendantsIterator(), e.getTarget().ancestorsIterator(), mapping);
     }
 }

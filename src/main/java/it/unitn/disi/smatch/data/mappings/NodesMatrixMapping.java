@@ -34,9 +34,9 @@ public class NodesMatrixMapping extends MatrixMapping<INode> {
      * @param c context
      * @return node count
      */
-    private int indexContext(IContext c) {
+    public static int indexContext(IContext c) {
         int result = 0;
-        for (Iterator<INode> i = c.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = c.nodeIterator(); i.hasNext(); ) {
             INode node = i.next();
             node.setIndex(result);
             result++;
@@ -55,7 +55,7 @@ public class NodesMatrixMapping extends MatrixMapping<INode> {
     }
 
     private void initNodes(IContext c, IIndexedObject[] o) {
-        for (Iterator<INode> i = c.getNodes(); i.hasNext();) {
+        for (Iterator<INode> i = c.nodeIterator(); i.hasNext();) {
             INode node = i.next();
             o[node.getIndex()] = node;
         }

@@ -1,14 +1,10 @@
 package it.unitn.disi.smatch.preprocessors;
 
 import it.unitn.disi.smatch.async.AsyncTask;
-import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
-import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
-import it.unitn.disi.smatch.data.trees.Node;
 import it.unitn.disi.smatch.oracles.ILinguisticOracle;
 import it.unitn.disi.smatch.oracles.ISenseMatcher;
-import it.unitn.disi.smatch.oracles.SenseMatcherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +57,7 @@ public class RunnableDefaultContextPreprocessor extends DefaultContextPreprocess
         this.maxThreadCount = Runtime.getRuntime().availableProcessors();
         this.executor = Executors.newFixedThreadPool(maxThreadCount, NAMING_THREAD_FACTORY);
         this.threadLimiter = new Semaphore(maxThreadCount);
-        setTotal(5 * context.getNodesCount());
+        setTotal(5 * context.nodesCount());
     }
 
     public RunnableDefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
@@ -80,7 +76,7 @@ public class RunnableDefaultContextPreprocessor extends DefaultContextPreprocess
         this.maxThreadCount = Runtime.getRuntime().availableProcessors();
         this.executor = Executors.newFixedThreadPool(maxThreadCount, NAMING_THREAD_FACTORY);
         this.threadLimiter = new Semaphore(maxThreadCount);
-        setTotal(5 * context.getNodesCount());
+        setTotal(5 * context.nodesCount());
     }
 
     public RunnableDefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
@@ -97,7 +93,7 @@ public class RunnableDefaultContextPreprocessor extends DefaultContextPreprocess
         this.executor = executor;
         this.maxThreadCount = maxThreadCount;
         this.threadLimiter = new Semaphore(maxThreadCount);
-        setTotal(5 * context.getNodesCount());
+        setTotal(5 * context.nodesCount());
     }
 
     public RunnableDefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
@@ -117,7 +113,7 @@ public class RunnableDefaultContextPreprocessor extends DefaultContextPreprocess
         this.executor = executor;
         this.maxThreadCount = maxThreadCount;
         this.threadLimiter = new Semaphore(maxThreadCount);
-        setTotal(5 * context.getNodesCount());
+        setTotal(5 * context.nodesCount());
     }
 
     @Override
@@ -131,7 +127,7 @@ public class RunnableDefaultContextPreprocessor extends DefaultContextPreprocess
     public void preprocess(IContext context) throws ContextPreprocessorException {
         log.debug("Running with maxThreadCount threads: " + maxThreadCount);
         if (0 == getTotal()) {
-            setTotal(4 * context.getNodesCount());
+            setTotal(4 * context.nodesCount());
         }
         Set<String> unrecognizedWords = new ConcurrentSkipListSet<>();
 
@@ -146,7 +142,7 @@ public class RunnableDefaultContextPreprocessor extends DefaultContextPreprocess
     protected IContext buildCLabs(final IContext context, final Set<String> unrecognizedWords) throws ContextPreprocessorException {
         final AtomicReference<ContextPreprocessorException> productionException = new AtomicReference<>(null);
 
-        for (final Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+        for (final Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
             //noinspection ThrowableResultOfMethodCallIgnored
             if (Thread.currentThread().isInterrupted() || null != productionException.get()) {
                 break;

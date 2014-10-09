@@ -65,19 +65,12 @@ public interface IBaseContext<E extends IBaseNode> {
      *
      * @return iterator over all context nodes
      */
-    Iterator<E> getNodes();
+    Iterator<E> nodeIterator();
 
     /**
      * Returns amount of nodes in the context.
      *
      * @return amount of nodes in the context
      */
-    int getNodesCount();
-
-    /**
-     * Returns unmodifiable list of all context nodes.
-     *
-     * @return unmodifiable list of all context nodes
-     */
-    List<E> getNodesList();
+    int nodesCount();
 }

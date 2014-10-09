@@ -32,8 +32,8 @@ public abstract class BaseContextLoader<E extends IBaseContext<T>, T extends IBa
         if (null != result) {
             log.debug("Creating ids for context...");
             int nodesParsed = 0;
-            for (Iterator<? extends IBaseNode> i = result.getNodes(); i.hasNext(); ) {
-                i.next().getNodeData().setId("n" + Integer.toString(nodesParsed));
+            for (Iterator<? extends IBaseNode> i = result.nodeIterator(); i.hasNext(); ) {
+                i.next().nodeData().setId("n" + Integer.toString(nodesParsed));
                 nodesParsed++;
             }
         }

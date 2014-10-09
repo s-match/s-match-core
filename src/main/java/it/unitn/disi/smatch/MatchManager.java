@@ -172,11 +172,11 @@ public class MatchManager implements IMatchManager {
             throw new SMatchException("Matcher library is not configured.");
         }
 
-        if (!sourceContext.getRoot().getNodeData().isSubtreePreprocessed()) {
+        if (!sourceContext.getRoot().nodeData().isSubtreePreprocessed()) {
             throw new SMatchException("Source context is not preprocessed.");
         }
 
-        if (!targetContext.getRoot().getNodeData().isSubtreePreprocessed()) {
+        if (!targetContext.getRoot().nodeData().isSubtreePreprocessed()) {
             throw new SMatchException("Target context is not preprocessed.");
         }
 

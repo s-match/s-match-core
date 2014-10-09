@@ -96,7 +96,7 @@ public class RunnableTreeMatcher extends DefaultTreeMatcher {
     public IContextMapping<INode> treeMatch(final IContext sourceContext, final IContext targetContext,
                                             final IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
         if (0 == getTotal()) {
-            setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+            setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
         }
         log.debug("Running with maxThreadCount threads: " + maxThreadCount);
         final AtomicReference<TreeMatcherException> productionException = new AtomicReference<>(null);
@@ -106,9 +106,9 @@ public class RunnableTreeMatcher extends DefaultTreeMatcher {
         final Map<String, IAtomicConceptOfLabel> sourceAcols = new ConcurrentHashMap<>();
         final Map<String, IAtomicConceptOfLabel> targetAcols = new ConcurrentHashMap<>();
 
-        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             final INode sourceNode = i.next();
-            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+            for (Iterator<INode> j = targetContext.nodeIterator(); j.hasNext(); ) {
                 //noinspection ThrowableResultOfMethodCallIgnored
                 if (Thread.currentThread().isInterrupted() || null != productionException.get()) {
                     break;

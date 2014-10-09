@@ -13,9 +13,9 @@ import java.util.Iterator;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public class ACoLMatrixMapping extends MatrixMapping<IAtomicConceptOfLabel> {
+public class ConceptMatrixMapping extends MatrixMapping<IAtomicConceptOfLabel> {
 
-    public ACoLMatrixMapping(IMatchMatrixFactory factory, IContext source, IContext target) {
+    public ConceptMatrixMapping(IMatchMatrixFactory factory, IContext source, IContext target) {
         super(factory, source, target);
     }
 
@@ -29,18 +29,6 @@ public class ACoLMatrixMapping extends MatrixMapping<IAtomicConceptOfLabel> {
         return indexContext(c);
     }
 
-    private int indexContext(IContext c) {
-        int result = 0;
-        for (Iterator<INode> i = c.getNodes(); i.hasNext(); ) {
-            INode node = i.next();
-            for (IAtomicConceptOfLabel acol : node.getNodeData().getACoLsList()) {
-                acol.setIndex(result);
-                result++;
-            }
-        }
-        return result;
-    }
-
     @Override
     protected void initCols(IContext targetContext, IIndexedObject[] targets) {
         initNodes(targetContext, targets);
@@ -52,11 +40,23 @@ public class ACoLMatrixMapping extends MatrixMapping<IAtomicConceptOfLabel> {
     }
 
     private void initNodes(IContext c, IIndexedObject[] o) {
-        for (Iterator<INode> i = c.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = c.nodeIterator(); i.hasNext(); ) {
             INode node = i.next();
-            for (IAtomicConceptOfLabel acol : node.getNodeData().getACoLsList()) {
+            for (IAtomicConceptOfLabel acol : node.nodeData().getConcepts()) {
                 o[acol.getIndex()] = acol;
             }
         }
+    }
+
+    private int indexContext(IContext c) {
+        int result = 0;
+        for (Iterator<INode> i = c.nodeIterator(); i.hasNext(); ) {
+            INode node = i.next();
+            for (IAtomicConceptOfLabel acol : node.nodeData().getConcepts()) {
+                acol.setIndex(result);
+                result++;
+            }
+        }
+        return result;
     }
 }

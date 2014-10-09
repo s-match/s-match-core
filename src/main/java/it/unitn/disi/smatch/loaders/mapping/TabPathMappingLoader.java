@@ -103,7 +103,7 @@ public class TabPathMappingLoader extends BaseFileMappingLoader implements IAsyn
         HashMap<String, INode> result = new HashMap<>();
 
         int nodeCount = 0;
-        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
             INode node = i.next();
             result.put(getPathToRoot(node), node);
             nodeCount++;
@@ -123,10 +123,10 @@ public class TabPathMappingLoader extends BaseFileMappingLoader implements IAsyn
      * @return the string of the path from root to node
      */
     private String getPathToRoot(INode node) {
-        StringBuilder result = new StringBuilder(node.getNodeData().getName());
+        StringBuilder result = new StringBuilder(node.nodeData().getName());
         INode curNode = node.getParent();
         while (null != curNode) {
-            result.insert(0, curNode.getNodeData().getName() + "\t");
+            result.insert(0, curNode.nodeData().getName() + "\t");
             curNode = curNode.getParent();
         }
         return result.toString();

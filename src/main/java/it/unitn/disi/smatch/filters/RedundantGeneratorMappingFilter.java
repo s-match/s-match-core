@@ -8,7 +8,6 @@ import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Generates entailed links which logically follow from the links in the mapping.
@@ -24,16 +23,16 @@ public class RedundantGeneratorMappingFilter extends BaseFilter implements IAsyn
 
     public RedundantGeneratorMappingFilter(IContextMapping<INode> mapping) {
         super(new HashMapping<>(), mapping);
-        setTotal(2 * mapping.getSourceContext().getNodesCount() * mapping.getTargetContext().getNodesCount());
+        setTotal(2 * mapping.getSourceContext().nodesCount() * mapping.getTargetContext().nodesCount());
     }
 
     protected IContextMapping<INode> process(IContextMapping<INode> mapping) {
         IContext sourceContext = mapping.getSourceContext();
         IContext targetContext = mapping.getTargetContext();
 
-        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             INode source = i.next();
-            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+            for (Iterator<INode> j = targetContext.nodeIterator(); j.hasNext(); ) {
                 if (Thread.currentThread().isInterrupted()) {
                     break;
                 }
@@ -46,9 +45,9 @@ public class RedundantGeneratorMappingFilter extends BaseFilter implements IAsyn
             }
         }
 
-        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             INode source = i.next();
-            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+            for (Iterator<INode> j = targetContext.nodeIterator(); j.hasNext(); ) {
                 if (Thread.currentThread().isInterrupted()) {
                     break;
                 }
@@ -167,53 +166,53 @@ public class RedundantGeneratorMappingFilter extends BaseFilter implements IAsyn
     // and then all the rest is not removed because of the "gap"
 
     protected boolean verifyCondition1(IContextMapping<INode> mapping, INode source, INode target) {
-        return findRelation(mapping, IMappingElement.LESS_GENERAL, source.getAncestorsList(), target) ||
-                findRelation(mapping, IMappingElement.LESS_GENERAL, source, target.getDescendantsList()) ||
-                findRelation(mapping, IMappingElement.LESS_GENERAL, source.getAncestorsList(), target.getDescendantsList()) ||
+        return findRelation(mapping, IMappingElement.LESS_GENERAL, source.ancestorsIterator(), target) ||
+                findRelation(mapping, IMappingElement.LESS_GENERAL, source, target.descendantsIterator()) ||
+                findRelation(mapping, IMappingElement.LESS_GENERAL, source.ancestorsIterator(), target.descendantsIterator()) ||
 
-                findRelation(mapping, IMappingElement.EQUIVALENCE, source.getAncestorsList(), target) ||
-                findRelation(mapping, IMappingElement.EQUIVALENCE, source, target.getDescendantsList()) ||
-                findRelation(mapping, IMappingElement.EQUIVALENCE, source.getAncestorsList(), target.getDescendantsList());
+                findRelation(mapping, IMappingElement.EQUIVALENCE, source.ancestorsIterator(), target) ||
+                findRelation(mapping, IMappingElement.EQUIVALENCE, source, target.descendantsIterator()) ||
+                findRelation(mapping, IMappingElement.EQUIVALENCE, source.ancestorsIterator(), target.descendantsIterator());
     }
 
     protected boolean verifyCondition2(IContextMapping<INode> mapping, INode source, INode target) {
-        return findRelation(mapping, IMappingElement.MORE_GENERAL, source, target.getAncestorsList()) ||
-                findRelation(mapping, IMappingElement.MORE_GENERAL, source.getDescendantsList(), target) ||
-                findRelation(mapping, IMappingElement.MORE_GENERAL, source.getDescendantsList(), target.getAncestorsList()) ||
+        return findRelation(mapping, IMappingElement.MORE_GENERAL, source, target.ancestorsIterator()) ||
+                findRelation(mapping, IMappingElement.MORE_GENERAL, source.descendantsIterator(), target) ||
+                findRelation(mapping, IMappingElement.MORE_GENERAL, source.descendantsIterator(), target.ancestorsIterator()) ||
 
-                findRelation(mapping, IMappingElement.EQUIVALENCE, source, target.getAncestorsList()) ||
-                findRelation(mapping, IMappingElement.EQUIVALENCE, source.getDescendantsList(), target) ||
-                findRelation(mapping, IMappingElement.EQUIVALENCE, source.getDescendantsList(), target.getAncestorsList());
+                findRelation(mapping, IMappingElement.EQUIVALENCE, source, target.ancestorsIterator()) ||
+                findRelation(mapping, IMappingElement.EQUIVALENCE, source.descendantsIterator(), target) ||
+                findRelation(mapping, IMappingElement.EQUIVALENCE, source.descendantsIterator(), target.ancestorsIterator());
     }
 
     protected boolean verifyCondition3(IContextMapping<INode> mapping, INode source, INode target) {
-        return findRelation(mapping, IMappingElement.DISJOINT, source, target.getAncestorsList()) ||
-                findRelation(mapping, IMappingElement.DISJOINT, source.getAncestorsList(), target) ||
-                findRelation(mapping, IMappingElement.DISJOINT, source.getAncestorsList(), target.getAncestorsList());
+        return findRelation(mapping, IMappingElement.DISJOINT, source, target.ancestorsIterator()) ||
+                findRelation(mapping, IMappingElement.DISJOINT, source.ancestorsIterator(), target) ||
+                findRelation(mapping, IMappingElement.DISJOINT, source.ancestorsIterator(), target.ancestorsIterator());
     }
 
-    protected boolean findRelation(IContextMapping<INode> mapping, char relation, List<INode> sourceNodes, INode targetNode) {
-        for (INode sourceNode : sourceNodes) {
-            if (relation == getRelation(mapping, sourceNode, targetNode)) {
+    protected boolean findRelation(IContextMapping<INode> mapping, char relation, Iterator<INode> sourceNodes, INode targetNode) {
+        while (sourceNodes.hasNext()) {
+            if (relation == getRelation(mapping, sourceNodes.next(), targetNode)) {
                 return true;
             }
         }
         return false;
     }
 
-    protected boolean findRelation(IContextMapping<INode> mapping, char relation, INode sourceNode, List<INode> targetNodes) {
-        for (INode targetNode : targetNodes) {
-            if (relation == getRelation(mapping, sourceNode, targetNode)) {
+    protected boolean findRelation(IContextMapping<INode> mapping, char relation, INode sourceNode, Iterator<INode> targetNodes) {
+        while (targetNodes.hasNext()) {
+            if (relation == getRelation(mapping, sourceNode, targetNodes.next())) {
                 return true;
             }
         }
         return false;
     }
 
-    protected boolean findRelation(IContextMapping<INode> mapping, char relation, List<INode> sourceNodes, List<INode> targetNodes) {
-        for (INode sourceNode : sourceNodes) {
-            for (INode targetNode : targetNodes) {
-                if (relation == getRelation(mapping, sourceNode, targetNode)) {
+    protected boolean findRelation(IContextMapping<INode> mapping, char relation, Iterator<INode> sourceNodes, Iterator<INode> targetNodes) {
+        while (sourceNodes.hasNext()) {
+            while (targetNodes.hasNext()) {
+                if (relation == getRelation(mapping, sourceNodes.next(), targetNodes.next())) {
                     return true;
                 }
             }

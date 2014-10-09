@@ -1,5 +1,6 @@
 package it.unitn.disi.smatch.data.trees;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import it.unitn.disi.smatch.data.ling.AtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 
@@ -17,24 +18,19 @@ public class Node extends BaseNode<INode, INodeData> implements INode, INodeData
 
     protected boolean isPreprocessed;
 
-    protected String cLabFormula;
-    protected String cNodeFormula;
+    protected String labelFormula;
+    protected String nodeFormula;
     // might be better implemented for a whole context via BitSet
     protected boolean source;
     protected String provenance;
 
-    protected ArrayList<IAtomicConceptOfLabel> acols;
+    protected List<IAtomicConceptOfLabel> concepts;
 
     public Node() {
         super();
-        isPreprocessed = false;
-
-        source = false;
-        cLabFormula = "";
-        cNodeFormula = "";
-        acols = null;
-        index = -1;
-        provenance = null;
+        labelFormula = "";
+        nodeFormula = "";
+        concepts = new ArrayList<>();
     }
 
     /**
@@ -44,126 +40,72 @@ public class Node extends BaseNode<INode, INodeData> implements INode, INodeData
      */
     public Node(String name) {
         super(name);
+        labelFormula = "";
+        nodeFormula = "";
+        concepts = new ArrayList<>();
     }
 
-
-    public String getcLabFormula() {
-        return cLabFormula;
+    @Override
+    public String getLabelFormula() {
+        return labelFormula;
     }
 
-    public void setcLabFormula(String cLabFormula) {
-        this.cLabFormula = cLabFormula;
+    @Override
+    public void setLabelFormula(String cLabFormula) {
+        this.labelFormula = cLabFormula;
     }
 
-    public String getcNodeFormula() {
-        return cNodeFormula;
+    @Override
+    public String getNodeFormula() {
+        return nodeFormula;
     }
 
-    public void setcNodeFormula(String cNodeFormula) {
-        this.cNodeFormula = cNodeFormula;
+    @Override
+    public void setNodeFormula(String cNodeFormula) {
+        this.nodeFormula = cNodeFormula;
     }
 
+    @Override
     public boolean getSource() {
         return source;
     }
 
+    @Override
     public void setSource(boolean source) {
         this.source = source;
     }
 
-    public IAtomicConceptOfLabel getACoLAt(int index) {
-        if (null == acols) {
-            throw new ArrayIndexOutOfBoundsException("node has no ACoLs");
-        }
-        return acols.get(index);
-    }
-
-    public int getACoLCount() {
-        if (acols == null) {
-            return 0;
-        } else {
-            return acols.size();
-        }
-    }
-
-    public int getACoLIndex(IAtomicConceptOfLabel acol) {
-        if (null == acol) {
-            throw new IllegalArgumentException("argument is null");
-        }
-
-        return acols.indexOf(acol);
-    }
-
-    public Iterator<IAtomicConceptOfLabel> getACoLs() {
-        if (null == acols) {
-            return Collections.<IAtomicConceptOfLabel>emptyList().iterator();
-        } else {
-            return acols.iterator();
-        }
-    }
-
-    public List<IAtomicConceptOfLabel> getACoLsList() {
-        if (null == acols) {
-            return Collections.emptyList();
-        } else {
-            return Collections.unmodifiableList(acols);
-        }
-    }
-
-    public IAtomicConceptOfLabel createACoL() {
-        return new AtomicConceptOfLabel();
-    }
-
-    public void addACoL(IAtomicConceptOfLabel acol) {
-        addACoL(getACoLCount(), acol);
-    }
-
-    public void addACoL(int index, IAtomicConceptOfLabel acol) {
-        if (null == acol) {
-            throw new IllegalArgumentException("new acol is null");
-        }
-
-        if (null == acols) {
-            acols = new ArrayList<>();
-        }
-        acols.add(index, acol);
-    }
-
-    public void removeACoL(int index) {
-        acols.remove(index);
-    }
-
-    public void removeACoL(IAtomicConceptOfLabel acol) {
-        acols.remove(acol);
-    }
-
+    @Override
     public boolean getIsPreprocessed() {
         return isPreprocessed;
     }
 
+    @Override
     public void setIsPreprocessed(boolean isPreprocessed) {
         this.isPreprocessed = isPreprocessed;
     }
 
+    @JsonIgnore
+    @Override
     public boolean isSubtreePreprocessed() {
         boolean result = isPreprocessed;
-        if (result) {
-            if (null != children) {
-                for (INode child : children) {
-                    result = child.getNodeData().isSubtreePreprocessed();
-                    if (!result) {
-                        break;
-                    }
+        if (result && null != children) {
+            for (INode child : children) {
+                result = child.nodeData().isSubtreePreprocessed();
+                if (!result) {
+                    break;
                 }
             }
         }
         return result;
     }
 
+    @Override
     public String getProvenance() {
         return provenance;
     }
 
+    @Override
     public void setProvenance(String provenance) {
         this.provenance = provenance;
     }
@@ -183,26 +125,41 @@ public class Node extends BaseNode<INode, INodeData> implements INode, INodeData
     }
 
     @Override
-    public Iterator<IAtomicConceptOfLabel> pathToRootACoLs() {
-        return new PathToRootACoLIterator(this);
+    public Iterator<IAtomicConceptOfLabel> pathToRootConceptIterator() {
+        return new PathToRootConceptIterator(this);
     }
 
-    private final static class PathToRootACoLIterator implements Iterator<IAtomicConceptOfLabel> {
+    @Override
+    public IAtomicConceptOfLabel createConcept() {
+        return new AtomicConceptOfLabel();
+    }
+
+    @Override
+    public List<IAtomicConceptOfLabel> getConcepts() {
+        return concepts;
+    }
+
+    @Override
+    public void setConcepts(List<IAtomicConceptOfLabel> concepts) {
+        this.concepts = concepts;
+    }
+
+    private final static class PathToRootConceptIterator implements Iterator<IAtomicConceptOfLabel> {
         private INode curNode;
         private int curIndex;
         private IAtomicConceptOfLabel next;
 
-        public PathToRootACoLIterator(final INode node) {
+        public PathToRootConceptIterator(final INode node) {
             curNode = node;
             curIndex = 0;
 
             // find next
-            while (null != curNode && curNode.getNodeData().getACoLCount() <= curIndex) {
+            while (null != curNode && curNode.nodeData().getConcepts().size() <= curIndex) {
                 curNode = curNode.getParent();
                 curIndex = 0;
             }
-            if (null != curNode && curIndex < curNode.getNodeData().getACoLCount()) {
-                next = curNode.getNodeData().getACoLAt(curIndex);
+            if (null != curNode && curIndex < curNode.nodeData().getConcepts().size()) {
+                next = curNode.nodeData().getConcepts().get(curIndex);
             }
         }
 
@@ -220,12 +177,12 @@ public class Node extends BaseNode<INode, INodeData> implements INode, INodeData
             curIndex++;
 
             // find next
-            while (null != curNode && curNode.getNodeData().getACoLCount() <= curIndex) {
+            while (null != curNode && curNode.nodeData().getConcepts().size() <= curIndex) {
                 curNode = curNode.getParent();
                 curIndex = 0;
             }
-            if (null != curNode && curIndex < curNode.getNodeData().getACoLCount()) {
-                next = curNode.getNodeData().getACoLAt(curIndex);
+            if (null != curNode && curIndex < curNode.nodeData().getConcepts().size()) {
+                next = curNode.nodeData().getConcepts().get(curIndex);
             } else {
                 next = null;
             }

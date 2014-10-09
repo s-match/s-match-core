@@ -45,10 +45,10 @@ public class PlainLeafMappingLoader extends PlainMappingLoader {
         HashMap<String, INode> result = new HashMap<>();
 
         int nodeCount = 0;
-        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
             INode node = i.next();
-            result.put("\\Top\\" + node.getNodeData().getName(), node);
-            result.put(node.getNodeData().getName(), node);
+            result.put("\\Top\\" + node.nodeData().getName(), node);
+            result.put(node.nodeData().getName(), node);
             nodeCount++;
         }
 

@@ -104,11 +104,11 @@ public class PlainMappingLoader extends BaseFileMappingLoader implements IAsyncM
         StringBuilder sb = new StringBuilder();
         INode parent = node;
         while (null != parent) {
-            if (parent.getNodeData().getName().contains("\\")) {
-                log.debug("source: replacing \\ in: " + parent.getNodeData().getName());
-                sb.insert(0, "\\" + parent.getNodeData().getName().replaceAll("\\\\", "/"));
+            if (parent.nodeData().getName().contains("\\")) {
+                log.debug("source: replacing \\ in: " + parent.nodeData().getName());
+                sb.insert(0, "\\" + parent.nodeData().getName().replaceAll("\\\\", "/"));
             } else {
-                sb.insert(0, "\\" + parent.getNodeData().getName());
+                sb.insert(0, "\\" + parent.nodeData().getName());
             }
             parent = parent.getParent();
         }
@@ -125,7 +125,7 @@ public class PlainMappingLoader extends BaseFileMappingLoader implements IAsyncM
         HashMap<String, INode> result = new HashMap<>();
 
         int nodeCount = 0;
-        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
             INode node = i.next();
             result.put(getNodePathToRoot(node), node);
             nodeCount++;

@@ -49,7 +49,7 @@ public class TabContextRenderer extends BaseFileContextRenderer<IBaseContext<IBa
             if (null == curNode) {
                 level = level.substring(1);
             } else {
-                line = level + curNode.getNodeData().getName() + "\n";
+                line = level + curNode.nodeData().getName() + "\n";
                 out.write(line);
                 progress();
 
@@ -58,11 +58,11 @@ public class TabContextRenderer extends BaseFileContextRenderer<IBaseContext<IBa
                     nodeQ.add(0, null);
                     Iterator<IBaseNode> children;
                     if (sort) {
-                        ArrayList<IBaseNode> childrenList = new ArrayList<>(curNode.getChildrenList());
+                        ArrayList<IBaseNode> childrenList = new ArrayList<>(curNode.getChildren());
                         Collections.sort(childrenList, Node.NODE_NAME_COMPARATOR);
                         children = childrenList.iterator();
                     } else {
-                        children = curNode.getChildren();
+                        children = curNode.childrenIterator();
                     }
                     int idx = 0;
                     //adding to the top of the queue

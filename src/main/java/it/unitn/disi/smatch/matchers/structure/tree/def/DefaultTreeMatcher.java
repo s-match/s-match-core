@@ -32,12 +32,12 @@ public class DefaultTreeMatcher extends BaseTreeMatcher implements IAsyncTreeMat
                               IContext sourceContext, IContext targetContext,
                               IContextMapping<IAtomicConceptOfLabel> acolMapping) {
         super(mappingFactory, nodeMatcher, sourceContext, targetContext, acolMapping);
-        setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+        setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
     }
 
     public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext, IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
         if (0 == getTotal()) {
-            setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+            setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
         }
 
         IContextMapping<INode> mapping = mappingFactory.getContextMappingInstance(sourceContext, targetContext);
@@ -48,9 +48,9 @@ public class DefaultTreeMatcher extends BaseTreeMatcher implements IAsyncTreeMat
         Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<>();
         Map<String, IAtomicConceptOfLabel> targetAcols = new HashMap<>();
 
-        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             INode sourceNode = i.next();
-            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+            for (Iterator<INode> j = targetContext.nodeIterator(); j.hasNext(); ) {
                 if (Thread.currentThread().isInterrupted()) {
                     break;
                 }

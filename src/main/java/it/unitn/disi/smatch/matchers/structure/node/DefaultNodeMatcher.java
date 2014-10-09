@@ -27,10 +27,10 @@ public class DefaultNodeMatcher extends BaseNodeMatcher implements INodeMatcher 
                           Map<String, IAtomicConceptOfLabel> targetACoLs,
                           INode sourceNode, INode targetNode) throws NodeMatcherException {
         char result = IMappingElement.IDK;
-        String sourceCNodeFormula = sourceNode.getNodeData().getcNodeFormula();
-        String targetCNodeFormula = targetNode.getNodeData().getcNodeFormula();
-        String sourceCLabFormula = sourceNode.getNodeData().getcLabFormula();
-        String targetCLabFormula = targetNode.getNodeData().getcLabFormula();
+        String sourceCNodeFormula = sourceNode.nodeData().getNodeFormula();
+        String targetCNodeFormula = targetNode.nodeData().getNodeFormula();
+        String sourceCLabFormula = sourceNode.nodeData().getLabelFormula();
+        String targetCLabFormula = targetNode.nodeData().getLabelFormula();
 
         if (null != sourceCNodeFormula && null != targetCNodeFormula && !sourceCNodeFormula.isEmpty() && !targetCNodeFormula.isEmpty() &&
                 null != sourceCLabFormula && null != targetCLabFormula && !sourceCLabFormula.isEmpty() && !targetCLabFormula.isEmpty()
@@ -50,7 +50,7 @@ public class DefaultNodeMatcher extends BaseNodeMatcher implements INodeMatcher 
             Object[] obj = mkAxioms(hashConceptNumber, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
             String axioms = (String) obj[0];
             int num_of_axiom_clauses = (Integer) obj[1];
-            // parse formulas with acols into formulas with DIMACS variables
+            // parse formulas with concepts into formulas with DIMACS variables
             ArrayList<ArrayList<String>> contextA = parseFormula(hashConceptNumber, sourceACoLs, sourceNode);
             ArrayList<ArrayList<String>> contextB = parseFormula(hashConceptNumber, targetACoLs, targetNode);
             // create contexts in DIMACS format

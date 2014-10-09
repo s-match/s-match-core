@@ -2,7 +2,6 @@ package it.unitn.disi.smatch.data.ling;
 
 import it.unitn.disi.smatch.data.IIndexedObject;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -56,71 +55,17 @@ public interface IAtomicConceptOfLabel extends IIndexedObject {
      */
     void setId(int id);
 
+    /**
+     * Returns a list of senses.
+     *
+     * @return list of senses
+     */
+    List<ISense> getSenses();
 
     /**
-     * Returns the sense at index index.
+     * Sets a list of senses.
      *
-     * @param index index
-     * @return sense at index index
+     * @param senses a list of senses to set
      */
-    ISense getSenseAt(int index);
-
-    /**
-     * Returns the number of senses.
-     *
-     * @return the number of senses
-     */
-    int getSenseCount();
-
-    /**
-     * Returns the index of sense in the receivers senses. If the receiver does not contain sense, -1 will be
-     * returned.
-     *
-     * @param sense a sense to search for
-     * @return the index of sense in the receivers senses
-     */
-    int getSenseIndex(ISense sense);
-
-    /**
-     * Returns the iterator over the senses of the receiver.
-     *
-     * @return the iterator over the senses of the receiver
-     */
-    Iterator<ISense> getSenses();
-
-    /**
-     * Returns unmodifiable list of senses of the receiver.
-     *
-     * @return unmodifiable list of senses of the receiver
-     */
-    List<ISense> getSenseList();
-
-    /**
-     * Adds a sense to the acol as the last sense.
-     *
-     * @param sense sense to add
-     */
-    void addSense(ISense sense);
-
-    /**
-     * Adds a sense to the receiver senses at the index.
-     *
-     * @param index index where the sense will be added
-     * @param sense sense to add
-     */
-    void addSense(int index, ISense sense);
-
-    /**
-     * Removes the sense at the index from the receiver senses.
-     *
-     * @param index index of a sense to remove
-     */
-    void removeSense(int index);
-
-    /**
-     * Removes the sense from the receiver senses.
-     *
-     * @param sense sense to remove
-     */
-    void removeSense(ISense sense);
+    void setSenses(List<ISense> senses);
 }

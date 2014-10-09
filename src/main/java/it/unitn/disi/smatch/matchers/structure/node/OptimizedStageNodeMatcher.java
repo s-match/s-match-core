@@ -30,7 +30,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
     /**
      * Checks whether source node and target node are disjoint.
      *
-     * @param acolMapping mapping between acols
+     * @param acolMapping mapping between concepts
      * @param sourceACoLs mapping acol id -> acol object
      * @param targetACoLs mapping acol id -> acol object
      * @param sourceNode  interface of source node
@@ -43,10 +43,10 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
                                 Map<String, IAtomicConceptOfLabel> targetACoLs,
                                 INode sourceNode, INode targetNode) throws NodeMatcherException {
         boolean result = false;
-        String sourceCNodeFormula = sourceNode.getNodeData().getcNodeFormula();
-        String targetCNodeFormula = targetNode.getNodeData().getcNodeFormula();
-        String sourceCLabFormula = sourceNode.getNodeData().getcLabFormula();
-        String targetCLabFormula = targetNode.getNodeData().getcLabFormula();
+        String sourceCNodeFormula = sourceNode.nodeData().getNodeFormula();
+        String targetCNodeFormula = targetNode.nodeData().getNodeFormula();
+        String sourceCLabFormula = sourceNode.nodeData().getLabelFormula();
+        String targetCLabFormula = targetNode.nodeData().getLabelFormula();
 
         if (null != sourceCNodeFormula && null != targetCNodeFormula && !sourceCNodeFormula.isEmpty() && !targetCNodeFormula.isEmpty() &&
                 null != sourceCLabFormula && null != targetCLabFormula && !sourceCLabFormula.isEmpty() && !targetCLabFormula.isEmpty()
@@ -76,7 +76,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
      *
      * @param sourceNode  interface of source node
      * @param targetNode  interface of target node
-     * @param acolMapping mapping between acols
+     * @param acolMapping mapping between concepts
      * @param sourceACoLs mapping acol id -> acol object
      * @param targetACoLs mapping acol id -> acol object
      * @return true if the nodes are in subsumption relation
@@ -87,15 +87,15 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
                                   Map<String, IAtomicConceptOfLabel> sourceACoLs,
                                   Map<String, IAtomicConceptOfLabel> targetACoLs) throws NodeMatcherException {
         boolean result = false;
-        String sourceCNodeFormula = sourceNode.getNodeData().getcNodeFormula();
-        String targetCNodeFormula = targetNode.getNodeData().getcNodeFormula();
-        String sourceCLabFormula = sourceNode.getNodeData().getcLabFormula();
-        String targetCLabFormula = targetNode.getNodeData().getcLabFormula();
+        String sourceCNodeFormula = sourceNode.nodeData().getNodeFormula();
+        String targetCNodeFormula = targetNode.nodeData().getNodeFormula();
+        String sourceCLabFormula = sourceNode.nodeData().getLabelFormula();
+        String targetCLabFormula = targetNode.nodeData().getLabelFormula();
 
         if (null != sourceCNodeFormula && null != targetCNodeFormula && !sourceCNodeFormula.isEmpty() && !targetCNodeFormula.isEmpty() &&
                 null != sourceCLabFormula && null != targetCLabFormula && !sourceCLabFormula.isEmpty() && !targetCLabFormula.isEmpty()
                 ) {
-            if (sourceNode.getNodeData().getSource()) {
+            if (sourceNode.nodeData().getSource()) {
                 HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
                 Object[] obj = mkAxioms(hashConceptNumber, sourceACoLs, targetACoLs, acolMapping, sourceNode, targetNode);
                 String axioms = (String) obj[0];

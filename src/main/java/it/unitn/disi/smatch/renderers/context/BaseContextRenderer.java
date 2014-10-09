@@ -40,7 +40,7 @@ public abstract class BaseContextRenderer<E extends IBaseContext<T>, T extends I
         }
         this.context = context;
         this.sort = false;
-        setTotal(context.getNodesCount());
+        setTotal(context.nodesCount());
     }
 
     protected BaseContextRenderer(String location, E context, boolean sort) {
@@ -50,7 +50,7 @@ public abstract class BaseContextRenderer<E extends IBaseContext<T>, T extends I
         }
         this.context = context;
         this.sort = sort;
-        setTotal(context.getNodesCount());
+        setTotal(context.nodesCount());
     }
 
     public void render(E context, String location) throws ContextRendererException {
@@ -69,7 +69,7 @@ public abstract class BaseContextRenderer<E extends IBaseContext<T>, T extends I
         try {
             Thread.currentThread().setName(Thread.currentThread().getName()
                     + " [" + this.getClass().getSimpleName()
-                    + ": context.size=" + context.getNodesCount()
+                    + ": context.size=" + context.nodesCount()
                     + ", location=" + location + "]");
 
             render(context, location);

@@ -46,15 +46,15 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
                                      IContextMapping<IAtomicConceptOfLabel> acolMapping) {
         super(mappingFactory, nodeMatcher, sourceContext, targetContext, acolMapping);
         this.nodeMatcher = nodeMatcher;
-        setTotal(3 * (long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+        setTotal(3 * (long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
     }
 
     public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext,
                                             IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
-        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             INode sourceNode = i.next();
             // this is to distinguish below, in matcher, for axiom creation
-            sourceNode.getNodeData().setSource(true);
+            sourceNode.nodeData().setSource(true);
         }
 
         Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<>();
@@ -100,7 +100,7 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
                                 Map<String, IAtomicConceptOfLabel> targetAcols,
                                 HashSet<IMappingElement<INode>> mapping) throws TreeMatcherException {
         nodeTreeDisjoint(n1, n2, acolMapping, sourceAcols, targetAcols, mapping);
-        for (Iterator<INode> i = n1.getChildren(); i.hasNext(); ) {
+        for (Iterator<INode> i = n1.childrenIterator(); i.hasNext(); ) {
             treeDisjoint(i.next(), n2, acolMapping, sourceAcols, targetAcols, mapping);
         }
     }
@@ -110,9 +110,9 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
                                     Map<String, IAtomicConceptOfLabel> sourceAcols,
                                     Map<String, IAtomicConceptOfLabel> targetAcols,
                                     HashSet<IMappingElement<INode>> mapping) throws TreeMatcherException {
-        if (findRelation(n1.getAncestors(), n2, IMappingElement.DISJOINT, mapping)) {
+        if (findRelation(n1.ancestorsIterator(), n2, IMappingElement.DISJOINT, mapping)) {
             // we skip n2 subtree, so adjust the counter
-            progress(n2.getDescendantCount());
+            progress(n2.descendantCount());
 
             return;
         }
@@ -120,13 +120,13 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
         if (nodeMatcher.nodeDisjoint(acolMapping, sourceAcols, targetAcols, n1, n2)) {
             addRelation(n1, n2, IMappingElement.DISJOINT, mapping);
             // we skip n2 subtree, so adjust the counter
-            progress(n2.getDescendantCount());
+            progress(n2.descendantCount());
             return;
         }
 
         progress();
 
-        for (Iterator<INode> i = n2.getChildren(); i.hasNext(); ) {
+        for (Iterator<INode> i = n2.childrenIterator(); i.hasNext(); ) {
             nodeTreeDisjoint(n1, i.next(), acolMapping, sourceAcols, targetAcols, mapping);
         }
     }
@@ -138,19 +138,19 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
                                      HashSet<IMappingElement<INode>> mapping) throws TreeMatcherException {
         if (findRelation(n1, n2, IMappingElement.DISJOINT, mapping)) {
             // we skip n1 subtree, so adjust the counter
-            progress(n1.getDescendantCount());
+            progress(n1.descendantCount());
             return false;
         }
 
         progress();
 
         if (!nodeMatcher.nodeSubsumedBy(n1, n2, acolMapping, sourceAcols, targetAcols)) {
-            for (Iterator<INode> i = n1.getChildren(); i.hasNext(); ) {
+            for (Iterator<INode> i = n1.childrenIterator(); i.hasNext(); ) {
                 treeSubsumedBy(i.next(), n2, direction, acolMapping, sourceAcols, targetAcols, mapping);
             }
         } else {
             boolean lastNodeFound = false;
-            for (Iterator<INode> i = n2.getChildren(); i.hasNext(); ) {
+            for (Iterator<INode> i = n2.childrenIterator(); i.hasNext(); ) {
                 if (treeSubsumedBy(n1, i.next(), direction, acolMapping, sourceAcols, targetAcols, mapping)) {
                     lastNodeFound = true;
                 }
@@ -160,7 +160,7 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
             }
 
             // we skip n1 subtree, so adjust the counter
-            progress(n1.getDescendantCount());
+            progress(n1.descendantCount());
             return true;
         }
 

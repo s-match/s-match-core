@@ -21,8 +21,8 @@ public interface IBaseNode<E extends IBaseNode, I extends IBaseNodeData> extends
     int getChildCount();
 
     /**
-     * Returns the index of node in the receivers children. If the receiver does not contain node, -1 will be
-     * returned.
+     * Returns the index of node in the receivers children.
+     * If the receiver does not contain node, -1 will be returned.
      *
      * @param child a node to search for
      * @return the index of node in the receivers children
@@ -34,14 +34,21 @@ public interface IBaseNode<E extends IBaseNode, I extends IBaseNodeData> extends
      *
      * @return the iterator over the children of the receiver
      */
-    Iterator<E> getChildren();
+    Iterator<E> childrenIterator();
 
     /**
      * Returns unmodifiable list of receivers children.
      *
      * @return unmodifiable list of receivers children
      */
-    List<E> getChildrenList();
+    List<E> getChildren();
+
+    /**
+     * Sets list of children.
+     *
+     * @param children new list of children
+     */
+    void setChildren(List<E> children);
 
     /**
      * Creates a child to the given node as the last child.
@@ -124,57 +131,35 @@ public interface IBaseNode<E extends IBaseNode, I extends IBaseNodeData> extends
      *
      * @return the count of ancestor nodes
      */
-    int getAncestorCount();
+    int ancestorCount();
 
     /**
      * Returns ancestors of the receiver. The returned list is ordered from the parent node to the root.
      *
      * @return ancestors of the receiver
      */
-    Iterator<E> getAncestors();
-
-    /**
-     * Returns unmodifiable list of receivers ancestors.
-     *
-     * @return unmodifiable list of receivers ancestors
-     */
-    List<E> getAncestorsList();
-
-    /**
-     * Returns the number of levels above this node -- the distance from
-     * the root to this node.  If this node is the root, returns 0.
-     *
-     * @return the number of levels above this node
-     */
-    int getLevel();
+    Iterator<E> ancestorsIterator();
 
     /**
      * Returns the count of descendant nodes.
      *
      * @return the count of descendant nodes
      */
-    int getDescendantCount();
+    int descendantCount();
 
     /**
      * Returns descendants of the receiver. The descendants are ordered breadth first.
      *
      * @return descendants of the receiver
      */
-    Iterator<E> getDescendants();
-
-    /**
-     * Returns unmodifiable list of receivers descendants.
-     *
-     * @return unmodifiable list of receivers descendants
-     */
-    List<E> getDescendantsList();
+    Iterator<E> descendantsIterator();
 
     /**
      * Returns interface to the node metadata.
      *
      * @return interface to the node metadata
      */
-    I getNodeData();
+    I nodeData();
 
     /**
      * Adds a listener <code>l</code> to the the listener list.

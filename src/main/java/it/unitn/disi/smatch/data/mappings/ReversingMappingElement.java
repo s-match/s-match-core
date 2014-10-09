@@ -12,7 +12,7 @@ public class ReversingMappingElement extends MappingElement<INode> {
 
     public ReversingMappingElement(INode sourceNode, INode targetNode, char relation) {
         super(sourceNode, targetNode, relation);
-        if (null != sourceNode && sourceNode.getNodeData().getSource()) {
+        if (null != sourceNode && sourceNode.nodeData().getSource()) {
             this.relation = relation;
             this.source = sourceNode;
             this.target = targetNode;

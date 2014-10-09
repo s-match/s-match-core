@@ -286,7 +286,7 @@ public class AsyncMatchManager extends MatchManager implements IAsyncMatchManage
             elmTask = asyncElementLevelMatching(sourceContext, targetContext);
 
             final IContextMapping<IAtomicConceptOfLabel> fake =
-                    mappingFactory.getACoLMappingInstance(sourceContext, targetContext);
+                    mappingFactory.getConceptMappingInstance(sourceContext, targetContext);
 
             // well... this is not exactly fair
             final AsyncTask<IContextMapping<INode>, IMappingElement<INode>> fakeSLM =
@@ -349,14 +349,14 @@ public class AsyncMatchManager extends MatchManager implements IAsyncMatchManage
         public MatchAsyncTask(IContext sourceContext, IContext targetContext) {
             super();
 
-            if (!sourceContext.getRoot().getNodeData().isSubtreePreprocessed()) {
+            if (!sourceContext.getRoot().nodeData().isSubtreePreprocessed()) {
                 sourceOffline = asyncOffline(sourceContext);
                 sourceOffline.addPropertyChangeListener(listener);
                 setTotal(getTotal() + sourceOffline.getTotal());
             } else {
                 sourceOffline = null;
             }
-            if (!targetContext.getRoot().getNodeData().isSubtreePreprocessed()) {
+            if (!targetContext.getRoot().nodeData().isSubtreePreprocessed()) {
                 targetOffline = asyncOffline(targetContext);
                 targetOffline.addPropertyChangeListener(listener);
                 setTotal(getTotal() + targetOffline.getTotal());
@@ -364,7 +364,7 @@ public class AsyncMatchManager extends MatchManager implements IAsyncMatchManage
                 targetOffline = null;
             }
 
-            match = asyncMatch(sourceContext, targetContext);
+            match = asyncOnline(sourceContext, targetContext);
             match.addPropertyChangeListener(listener);
 
             setTotal(getTotal() + match.getTotal());

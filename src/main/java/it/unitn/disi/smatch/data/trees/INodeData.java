@@ -19,14 +19,14 @@ public interface INodeData extends IBaseNodeData {
      *
      * @return the concept of a label formula
      */
-    String getcLabFormula();
+    String getLabelFormula();
 
     /**
      * Sets the concept of a label formula.
      *
      * @param cLabFormula the concept of a label formula
      */
-    void setcLabFormula(String cLabFormula);
+    void setLabelFormula(String cLabFormula);
 
     /**
      * Returns the concept at node formula. Concept at node formula is a logical representation of the concept
@@ -34,14 +34,14 @@ public interface INodeData extends IBaseNodeData {
      *
      * @return the concept at node formula
      */
-    String getcNodeFormula();
+    String getNodeFormula();
 
     /**
      * Sets the concept at node formula.
      *
      * @param cNodeFormula the concept at node formula
      */
-    void setcNodeFormula(String cNodeFormula);
+    void setNodeFormula(String cNodeFormula);
 
     /**
      * Indicates whether this node belongs to the source context.
@@ -57,80 +57,6 @@ public interface INodeData extends IBaseNodeData {
      * @param source the source flag
      */
     void setSource(boolean source);
-
-    /**
-     * Returns the acol at index index.
-     *
-     * @param index index
-     * @return acol at index index
-     */
-    IAtomicConceptOfLabel getACoLAt(int index);
-
-    /**
-     * Returns the number of acols.
-     *
-     * @return number of acols
-     */
-    int getACoLCount();
-
-    /**
-     * Returns the index of acol in the receivers acols. If the receiver does not contain acol, -1 will be
-     * returned.
-     *
-     * @param acol an acol to search for
-     * @return the index of acol in the receivers acols
-     */
-    int getACoLIndex(IAtomicConceptOfLabel acol);
-
-    /**
-     * Returns atomic concepts of labels associated with the given node.
-     *
-     * @return atomic concepts of labels
-     */
-    Iterator<IAtomicConceptOfLabel> getACoLs();
-
-    /**
-     * Returns unmodifiable list of the acols of the receiver.
-     *
-     * @return unmodifiable list of the acols of the receiver
-     */
-    List<IAtomicConceptOfLabel> getACoLsList();
-
-    /**
-     * Creates an instance of an ACoL.
-     *
-     * @return an instance of an ACoL
-     */
-    IAtomicConceptOfLabel createACoL();
-
-    /**
-     * Adds atomic concept of label to the node acols.
-     *
-     * @param acol atomic concept of label
-     */
-    void addACoL(IAtomicConceptOfLabel acol);
-
-    /**
-     * Adds acol to the receiver acols at index.
-     *
-     * @param index index where the acol will be added
-     * @param acol  acol to add
-     */
-    void addACoL(int index, IAtomicConceptOfLabel acol);
-
-    /**
-     * Removes the acol at index from the receiver acols.
-     *
-     * @param index index of an acol to remove
-     */
-    void removeACoL(int index);
-
-    /**
-     * Removes acol from the receiver acols.
-     *
-     * @param acol acol to remove
-     */
-    void removeACoL(IAtomicConceptOfLabel acol);
 
     /**
      * Returns whether the node has been preprocessed.
@@ -168,9 +94,28 @@ public interface INodeData extends IBaseNodeData {
     void setProvenance(String provenance);
 
     /**
-     * All acols along path to root.
+     * Creates an instance of an ACoL.
      *
-     * @return all acols along path to root
+     * @return an instance of an ACoL
      */
-    Iterator<IAtomicConceptOfLabel> pathToRootACoLs();
+    IAtomicConceptOfLabel createConcept();
+
+    /**
+     * Returns a list of the concepts of the receiver.
+     *
+     * @return list of the concepts of the receiver
+     */
+    List<IAtomicConceptOfLabel> getConcepts();
+
+    /**
+     * Sets a list of the concepts of the receiver.
+     */
+    void setConcepts(List<IAtomicConceptOfLabel> concepts);
+
+    /**
+     * All concepts along path to root.
+     *
+     * @return all concepts along path to root
+     */
+    Iterator<IAtomicConceptOfLabel> pathToRootConceptIterator();
 }

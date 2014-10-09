@@ -13,5 +13,5 @@ public interface IMappingFactory {
 
     IContextMapping<INode> getContextMappingInstance(IContext source, IContext target);
 
-    IContextMapping<IAtomicConceptOfLabel> getACoLMappingInstance(IContext source, IContext target);
+    IContextMapping<IAtomicConceptOfLabel> getConceptMappingInstance(IContext source, IContext target);
 }

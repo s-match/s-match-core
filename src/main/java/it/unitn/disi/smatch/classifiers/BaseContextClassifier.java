@@ -20,7 +20,7 @@ public abstract class BaseContextClassifier extends AsyncTask<Void, INode> imple
 
     protected BaseContextClassifier(IContext context) {
         this.context = context;
-        setTotal(context.getNodesCount());
+        setTotal(context.nodesCount());
     }
 
     public void buildCNodeFormulas(IContext context) throws ContextClassifierException {
@@ -34,7 +34,7 @@ public abstract class BaseContextClassifier extends AsyncTask<Void, INode> imple
         final String threadName = Thread.currentThread().getName();
         try {
             Thread.currentThread().setName(Thread.currentThread().getName()
-                    + " [" + this.getClass().getSimpleName() + ": context.size=" + context.getNodesCount() + "]");
+                    + " [" + this.getClass().getSimpleName() + ": context.size=" + context.nodesCount() + "]");
             buildCNodeFormulas(context);
             return null;
         } finally {

@@ -80,7 +80,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
         this.notWords = DEFAULT_NOT_WORDS;
         this.numberCharacters = DEFAULT_NUMBER_CHARACTERS;
 
-        setTotal(4 * context.getNodesCount());
+        setTotal(4 * context.nodesCount());
     }
 
     public DefaultContextPreprocessor(ISenseMatcher senseMatcher, ILinguisticOracle linguisticOracle,
@@ -110,7 +110,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
         this.notWords = notWords;
         this.numberCharacters = numberCharacters;
 
-        setTotal(4 * context.getNodesCount());
+        setTotal(4 * context.nodesCount());
     }
 
     /**
@@ -124,7 +124,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
     @Override
     public void preprocess(IContext context) throws ContextPreprocessorException {
         if (0 == getTotal()) {
-            setTotal(4 * context.getNodesCount());
+            setTotal(4 * context.nodesCount());
         }
         Set<String> unrecognizedWords = new HashSet<>();
 
@@ -162,7 +162,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
     protected IContext buildCLabs(IContext context, Set<String> unrecognizedWords) throws ContextPreprocessorException {
-        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
             if (Thread.currentThread().isInterrupted()) {
                 break;
             }
@@ -185,14 +185,12 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
     public void processNode(INode node, Set<String> unrecognizedWords) throws ContextPreprocessorException {
         try {
             // reset old preprocessing
-            node.getNodeData().setcLabFormula("");
-            node.getNodeData().setcNodeFormula("");
-            while (0 < node.getNodeData().getACoLCount()) {
-                node.getNodeData().removeACoL(0);
-            }
+            node.nodeData().setLabelFormula("");
+            node.nodeData().setNodeFormula("");
+            node.nodeData().getConcepts().clear();
 
             boolean isEmpty = true;
-            String labelOfNode = node.getNodeData().getName().trim();
+            String labelOfNode = node.nodeData().getName().trim();
 
             log.trace("preprocessing: " + labelOfNode);
 
@@ -222,12 +220,10 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
 
                 // create atomic node of label
                 IAtomicConceptOfLabel ACoL = createACoL(node, id_tok, labelOfNode, lemma);
+                // add senses to ACoL
+                ACoL.setSenses(wnSense);
                 // to token ids
                 meaningfulTokens = meaningfulTokens + id_tok + " ";
-                // add senses to ACoL
-                for (ISense sense : wnSense) {
-                    ACoL.addSense(sense);
-                }
                 isEmpty = false;
                 id_tok++;
             } else {
@@ -284,10 +280,8 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
                             // if there no WN senses
                             if (0 == wnSense.size() && !(("top".equals(labelOfNode) || "thing".equals(labelOfNode)) && !node.hasParent())) {
                                 unrecognizedWords.add(token);
-                            }
-                            // add senses to ACoL
-                            for (ISense sense : wnSense) {
-                                ACoL.addSense(sense);
+                            } else {
+                                ACoL.setSenses(wnSense);
                             }
                             isEmpty = false;
                         }
@@ -307,18 +301,18 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
             }
             // build complex formula of a node
             buildComplexConcept(node, tokensOfNodeLabel, meaningfulTokens);
-            node.getNodeData().setIsPreprocessed(true);
+            node.nodeData().setIsPreprocessed(true);
         } catch (LinguisticOracleException e) {
             throw new ContextPreprocessorException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 
     private IAtomicConceptOfLabel createACoL(INode node, int id, String token, String lemma) {
-        IAtomicConceptOfLabel result = node.getNodeData().createACoL();
+        IAtomicConceptOfLabel result = node.nodeData().createConcept();
         result.setId(id);
         result.setToken(token);
         result.setLemma(lemma);
-        node.getNodeData().addACoL(result);
+        node.nodeData().getConcepts().add(result);
         return result;
     }
 
@@ -467,7 +461,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
             } else {
                 if (meaningfulTokens.contains(" " + i + " ")) {
                     // fill list with ACoL ids
-                    vec.add((node.getNodeData().getId() + "_" + i));
+                    vec.add((node.nodeData().getId() + "_" + i));
                 }
             }
         }
@@ -530,7 +524,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
             }
         }
         // assign formula to the node
-        node.getNodeData().setcLabFormula(formulaOfConcept.toString());
+        node.nodeData().setLabelFormula(formulaOfConcept.toString());
     }
 
     /**
@@ -569,7 +563,9 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
 
     private void enrichSensesSets(IAtomicConceptOfLabel acol, List<ISense> senses) {
         for (ISense sense : senses) {
-            acol.addSense(sense);
+            if (!acol.getSenses().contains(sense)) {
+                acol.getSenses().add(sense);
+            }
         }
     }
 
@@ -581,7 +577,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
      * @throws ContextPreprocessorException ContextPreprocessorException
      */
     protected IContext findMultiwordsInContextStructure(IContext context) throws ContextPreprocessorException {
-        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
             if (Thread.currentThread().isInterrupted()) {
                 break;
             }
@@ -589,11 +585,10 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
             INode sourceNode = i.next();
             // sense disambiguation within the context structure
             // for all ACoLs in the source node
-            for (Iterator<IAtomicConceptOfLabel> j = sourceNode.getNodeData().getACoLs(); j.hasNext(); ) {
-                IAtomicConceptOfLabel synSource = j.next();
+            for (IAtomicConceptOfLabel synSource : sourceNode.nodeData().getConcepts()) {
                 // in all descendants and ancestors
-                findMultiwordsAmong(sourceNode.getDescendants(), synSource);
-                findMultiwordsAmong(sourceNode.getAncestors(), synSource);
+                findMultiwordsAmong(sourceNode.descendantsIterator(), synSource);
+                findMultiwordsAmong(sourceNode.ancestorsIterator(), synSource);
             }
 
             progress();
@@ -604,8 +599,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
     protected void findMultiwordsAmong(Iterator<INode> i, IAtomicConceptOfLabel synSource) throws ContextPreprocessorException {
         while (i.hasNext()) {
             INode targetNode = i.next();
-            for (Iterator<IAtomicConceptOfLabel> k = targetNode.getNodeData().getACoLs(); k.hasNext(); ) {
-                IAtomicConceptOfLabel synTarget = k.next();
+            for (IAtomicConceptOfLabel synTarget : targetNode.nodeData().getConcepts()) {
                 List<ISense> wnSenses = checkMW(synSource.getLemma(), synTarget.getLemma());
                 enrichSensesSets(synSource, wnSenses);
                 enrichSensesSets(synTarget, wnSenses);
@@ -626,27 +620,23 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
         HashMap<IAtomicConceptOfLabel, List<ISense>> refinedSenses = new HashMap<>();
 
         try {
-            for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+            for (Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
                 if (Thread.currentThread().isInterrupted()) {
                     break;
                 }
 
                 INode sourceNode = i.next();
                 // if node is complex
-                if (1 < sourceNode.getNodeData().getACoLCount()) {
+                if (1 < sourceNode.nodeData().getConcepts().size()) {
                     // for each ACoL in the node
-                    for (Iterator<IAtomicConceptOfLabel> j = sourceNode.getNodeData().getACoLs(); j.hasNext(); ) {
-                        IAtomicConceptOfLabel sourceACoL = j.next();
+                    for (IAtomicConceptOfLabel sourceACoL : sourceNode.nodeData().getConcepts()) {
                         // compare with all the other ACoLs in the node
-                        for (Iterator<IAtomicConceptOfLabel> k = sourceNode.getNodeData().getACoLs(); k.hasNext(); ) {
-                            IAtomicConceptOfLabel targetACoL = k.next();
+                        for (IAtomicConceptOfLabel targetACoL : sourceNode.nodeData().getConcepts()) {
                             if (!targetACoL.equals(sourceACoL)) {
                                 // for each sense in source ACoL
-                                for (Iterator<ISense> s = sourceACoL.getSenses(); s.hasNext(); ) {
-                                    ISense sourceSense = s.next();
+                                for (ISense sourceSense : sourceACoL.getSenses()) {
                                     // for each sense in target ACoL
-                                    for (Iterator<ISense> t = targetACoL.getSenses(); t.hasNext(); ) {
-                                        ISense targetSense = t.next();
+                                    for (ISense targetSense : targetACoL.getSenses()) {
                                         if (senseMatcher.isSourceSynonymTarget(sourceSense, targetSense) ||
                                                 senseMatcher.isSourceLessGeneralThanTarget(sourceSense, targetSense) ||
                                                 senseMatcher.isSourceMoreGeneralThanTarget(sourceSense, targetSense)) {
@@ -661,14 +651,12 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
                 }
                 // sense disambiguation within the context structure
                 // for all ACoLs in the source node
-                for (Iterator<IAtomicConceptOfLabel> j = sourceNode.getNodeData().getACoLs(); j.hasNext(); ) {
-                    IAtomicConceptOfLabel sourceACoL = j.next();
+                for (IAtomicConceptOfLabel sourceACoL : sourceNode.nodeData().getConcepts()) {
                     if (!refinedSenses.containsKey(sourceACoL)) {
-                        for (Iterator<ISense> s = sourceACoL.getSenses(); s.hasNext(); ) {
-                            ISense sourceSense = s.next();
+                        for (ISense sourceSense : sourceACoL.getSenses()) {
                             // for all target nodes (ancestors and descendants)
-                            senseFilteringAmong(sourceNode.getDescendants(), sourceSense, sourceACoL, refinedSenses);
-                            senseFilteringAmong(sourceNode.getAncestors(), sourceSense, sourceACoL, refinedSenses);
+                            senseFilteringAmong(sourceNode.descendantsIterator(), sourceSense, sourceACoL, refinedSenses);
+                            senseFilteringAmong(sourceNode.ancestorsIterator(), sourceSense, sourceACoL, refinedSenses);
                         }
                     }
                 }
@@ -682,21 +670,16 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
         // Loop on senses of the all concepts and assign to them
         // senses marked as refined on the previous step
         // If there are no refined senses save the original ones
-        for (Iterator<INode> i = context.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
             if (Thread.currentThread().isInterrupted()) {
                 break;
             }
 
-            for (Iterator<IAtomicConceptOfLabel> j = i.next().getNodeData().getACoLs(); j.hasNext(); ) {
-                IAtomicConceptOfLabel acol = j.next();
+            List<IAtomicConceptOfLabel> concepts = i.next().nodeData().getConcepts();
+            for (IAtomicConceptOfLabel acol : concepts) {
                 List<ISense> refined = refinedSenses.get(acol);
                 if (null != refined) {
-                    while (0 < acol.getSenseCount()) {
-                        acol.removeSense(0);
-                    }
-                    for (ISense sense : refined) {
-                        acol.addSense(sense);
-                    }
+                    acol.setSenses(refined);
                 }
             }
 
@@ -708,9 +691,11 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
         List<ISense> senses = refinedSenses.get(acol);
         if (null == senses) {
             senses = new ArrayList<>();
+            refinedSenses.put(acol, senses);
         }
-        senses.add(sense);
-        refinedSenses.put(acol, senses);
+        if (-1 == senses.indexOf(sense)) {
+            senses.add(sense);
+        }
     }
 
     protected void senseFilteringAmong(Iterator<INode> i, ISense sourceSense, IAtomicConceptOfLabel sourceACoL,
@@ -718,11 +703,9 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
         try {
             while (i.hasNext()) {
                 INode targetNode = i.next();
-                for (Iterator<IAtomicConceptOfLabel> k = targetNode.getNodeData().getACoLs(); k.hasNext(); ) {
-                    IAtomicConceptOfLabel targetACoL = k.next();
-                    if (null == refinedSenses.get(targetACoL)) {
-                        for (Iterator<ISense> t = targetACoL.getSenses(); t.hasNext(); ) {
-                            ISense targetSense = t.next();
+                for (IAtomicConceptOfLabel targetACoL : targetNode.nodeData().getConcepts()) {
+                    if (!refinedSenses.containsKey(targetACoL)) {
+                        for (ISense targetSense : targetACoL.getSenses()) {
                             // Check whether each sense not synonym or more general, less general then the senses of
                             // the ancestors and descendants of the node in context hierarchy
                             if ((senseMatcher.isSourceSynonymTarget(sourceSense, targetSense)) ||

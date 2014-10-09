@@ -1,5 +1,6 @@
 package it.unitn.disi.smatch.data.mappings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import it.unitn.disi.smatch.data.IIndexedObject;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.matrices.IMatchMatrix;
@@ -30,7 +31,7 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
     // for iterator
     private volatile transient int modCount;
 
-    private class MatrixMappingIterator implements Iterator<IMappingElement<T>> {
+    private final class MatrixMappingIterator implements Iterator<IMappingElement<T>> {
 
         private int expectedModCount;
         private int curRow;
@@ -131,14 +132,14 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
         this.matrix = factory.getInstance(rows, cols);
         this.factory = factory;
 
-        sources = (T[]) new IIndexedObject[rows];
-        targets = (T[]) new IIndexedObject[cols];
+        this.sources = (T[]) new IIndexedObject[rows];
+        this.targets = (T[]) new IIndexedObject[cols];
 
         initRows(sourceContext, sources);
         initCols(targetContext, targets);
 
-        this.elementCount = new AtomicInteger(0);
-        modCount = 0;
+        this.elementCount = new AtomicInteger();
+        this.modCount = 0;
     }
 
     protected void initCols(IContext targetContext, IIndexedObject[] targets) {
@@ -217,6 +218,7 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
     }
 
     @Override
+    @JsonIgnore
     public boolean isEmpty() {
         return 0 == elementCount.get();
     }
@@ -275,8 +277,8 @@ public class MatrixMapping<T extends IIndexedObject> extends BaseMapping<T> impl
     }
 
     @Override
-    public IContextMapping<IAtomicConceptOfLabel> getACoLMappingInstance(IContext source, IContext target) {
-        return new ACoLMatrixMapping(factory, source, target);
+    public IContextMapping<IAtomicConceptOfLabel> getConceptMappingInstance(IContext source, IContext target) {
+        return new ConceptMatrixMapping(factory, source, target);
     }
 
     protected int indexTarget(IContext c) {

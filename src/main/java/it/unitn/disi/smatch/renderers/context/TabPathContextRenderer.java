@@ -51,11 +51,11 @@ public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext
             if (curNode.getChildCount() > 0) {
                 Iterator<IBaseNode> children;
                 if (sort) {
-                    ArrayList<IBaseNode> childrenList = new ArrayList<>(curNode.getChildrenList());
+                    ArrayList<IBaseNode> childrenList = new ArrayList<>(curNode.getChildren());
                     Collections.sort(childrenList, Node.NODE_NAME_COMPARATOR);
                     children = childrenList.iterator();
                 } else {
-                    children = curNode.getChildren();
+                    children = curNode.childrenIterator();
                 }
                 while (children.hasNext()) {
                     nodeQ.add(children.next());
@@ -65,10 +65,10 @@ public class TabPathContextRenderer extends BaseFileContextRenderer<IBaseContext
     }
 
     private String getPathToRoot(IBaseNode node) {
-        StringBuilder result = new StringBuilder(node.getNodeData().getName());
+        StringBuilder result = new StringBuilder(node.nodeData().getName());
         IBaseNode curNode = node.getParent();
         while (null != curNode) {
-            result.insert(0, curNode.getNodeData().getName() + "\t");
+            result.insert(0, curNode.nodeData().getName() + "\t");
             curNode = curNode.getParent();
         }
         result.append("\n");

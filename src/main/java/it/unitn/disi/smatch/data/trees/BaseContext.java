@@ -1,9 +1,7 @@
 package it.unitn.disi.smatch.data.trees;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Base class for contexts.
@@ -14,11 +12,9 @@ import java.util.List;
 public class BaseContext<E extends IBaseNode> implements IBaseContext<E>, IBaseTreeStructureChangedListener<E> {
 
     protected E root;
-    protected ArrayList<E> nodes;
 
     public BaseContext() {
         root = null;
-        nodes = null;
     }
 
     @Override
@@ -57,47 +53,29 @@ public class BaseContext<E extends IBaseNode> implements IBaseContext<E>, IBaseT
     @Override
     public E createRoot(String name) {
         E result = createRoot();
-        result.getNodeData().setName(name);
+        result.nodeData().setName(name);
         return result;
     }
 
     @Override
-    public Iterator<E> getNodes() {
+    public Iterator<E> nodeIterator() {
         if (hasRoot()) {
-            return new StartIterator<>(root, root.getDescendants());
+            return new StartIterator<>(root, root.descendantsIterator());
         } else {
             return Collections.<E>emptyList().iterator();
         }
     }
 
     @Override
-    public List<E> getNodesList() {
-        if (null != nodes) {
-            return Collections.unmodifiableList(nodes);
-        } else {
-            if (hasRoot()) {
-                nodes = new ArrayList<>();
-                nodes.add(root);
-                nodes.addAll(root.getDescendantsList());
-                nodes.trimToSize();
-                return Collections.unmodifiableList(nodes);
-            } else {
-                return Collections.emptyList();
-            }
-        }
-    }
-
-    @Override
-    public int getNodesCount() {
+    public int nodesCount() {
         if (null == root) {
             return 0;
         } else {
-            return root.getDescendantCount() + 1;
+            return root.descendantCount() + 1;
         }
     }
 
     @Override
     public void treeStructureChanged(E node) {
-        nodes = null;
     }
 }

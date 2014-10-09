@@ -24,7 +24,7 @@ public class Context extends BaseContext<INode> implements IContext, ITreeStruct
     @Override
     public INode createRoot(String name) {
         INode result = createRoot();
-        result.getNodeData().setName(name);
+        result.nodeData().setName(name);
         return result;
     }
 

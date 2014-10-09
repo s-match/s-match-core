@@ -2,6 +2,7 @@ package it.unitn.disi.smatch.data.mappings;
 
 import it.unitn.disi.smatch.data.trees.IContext;
 
+import java.io.Serializable;
 import java.util.AbstractSet;
 
 /**
@@ -9,7 +10,7 @@ import java.util.AbstractSet;
  *
  * @author <a rel="author" href="http://autayeu.com/">Aliaksandr Autayeu</a>
  */
-public abstract class BaseMapping<T> extends AbstractSet<IMappingElement<T>> implements IContextMapping<T> {
+public abstract class BaseMapping<T> extends AbstractSet<IMappingElement<T>> implements IContextMapping<T>, Serializable {
 
     protected double similarity;
     protected final IContext sourceContext;

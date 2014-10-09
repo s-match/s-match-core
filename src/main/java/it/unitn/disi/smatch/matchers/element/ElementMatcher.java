@@ -81,7 +81,7 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
         this.targetContext = targetContext;
 
         // progress by node rather than by acol because task can be created on non-preprocessed contexts...
-        setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+        setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
     }
 
     public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher,
@@ -109,7 +109,7 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
 
         this.sourceContext = sourceContext;
         this.targetContext = targetContext;
-        setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+        setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
     }
 
     public ElementMatcher(IMappingFactory mappingFactory, ISenseMatcher senseMatcher,
@@ -153,30 +153,27 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
         }
         this.sourceContext = sourceContext;
         this.targetContext = targetContext;
-        setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+        setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
     }
 
     public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws ElementMatcherException {
         if (0 == getTotal()) {
-            setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+            setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
         }
         // Calculates relations between all ACoLs in both contexts and produces a mapping between them.
         // Corresponds to Step 3 of the semantic matching algorithm.
 
-        final IContextMapping<IAtomicConceptOfLabel> result = mappingFactory.getACoLMappingInstance(sourceContext, targetContext);
+        final IContextMapping<IAtomicConceptOfLabel> result = mappingFactory.getConceptMappingInstance(sourceContext, targetContext);
 
-        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             final INode sourceNode = i.next();
-            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+            for (Iterator<INode> j = targetContext.nodeIterator(); j.hasNext(); ) {
                 final INode targetNode = j.next();
-                for (Iterator<IAtomicConceptOfLabel> ii = sourceNode.getNodeData().getACoLs(); ii.hasNext(); ) {
-                    final IAtomicConceptOfLabel sourceACoL = ii.next();
-                    for (Iterator<IAtomicConceptOfLabel> jj = targetNode.getNodeData().getACoLs(); jj.hasNext(); ) {
+                for (IAtomicConceptOfLabel sourceACoL : sourceNode.nodeData().getConcepts()) {
+                    for (IAtomicConceptOfLabel targetACoL : targetNode.nodeData().getConcepts()) {
                         if (Thread.currentThread().isInterrupted()) {
                             break;
                         }
-
-                        final IAtomicConceptOfLabel targetACoL = jj.next();
 
                         //Use Element level semantic matchers library
                         //to check the relation holding between two ACoLs represented by lists of WN senses and tokens
@@ -199,8 +196,8 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
         try {
             Thread.currentThread().setName(Thread.currentThread().getName()
                     + " [" + this.getClass().getSimpleName()
-                    + ": source.size=" + sourceContext.getNodesCount()
-                    + ", target.size=" + targetContext.getNodesCount() + "]");
+                    + ": source.size=" + sourceContext.nodesCount()
+                    + ", target.size=" + targetContext.nodesCount() + "]");
 
             return elementLevelMatching(sourceContext, targetContext);
         } finally {
@@ -224,7 +221,7 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
      */
     protected char getRelation(IAtomicConceptOfLabel sourceACoL, IAtomicConceptOfLabel targetACoL) throws ElementMatcherException {
         try {
-            char relation = senseMatcher.getRelation(sourceACoL.getSenseList(), targetACoL.getSenseList());
+            char relation = senseMatcher.getRelation(sourceACoL.getSenses(), targetACoL.getSenses());
 
             //if WN matcher did not find relation
             if (IMappingElement.IDK == relation) {
@@ -234,7 +231,7 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
                     //if they did not find relation
                     if (IMappingElement.IDK == relation) {
                         //use sense and gloss based matchers
-                        relation = getRelationFromSenseGlossMatchers(sourceACoL.getSenseList(), targetACoL.getSenseList());
+                        relation = getRelationFromSenseGlossMatchers(sourceACoL.getSenses(), targetACoL.getSenses());
                     }
                 }
             }

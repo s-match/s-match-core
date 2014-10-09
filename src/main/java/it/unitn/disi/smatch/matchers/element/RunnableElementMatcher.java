@@ -168,32 +168,29 @@ public class RunnableElementMatcher extends ElementMatcher {
     public AsyncTask<IContextMapping<IAtomicConceptOfLabel>, IMappingElement<IAtomicConceptOfLabel>>
     asyncElementLevelMatching(IContext sourceContext, IContext targetContext) {
         return new RunnableElementMatcher(mappingFactory, senseMatcher, useWeakSemanticsElementLevelMatchersLibrary,
-                stringMatchers, senseGlossMatchers, sourceContext, targetContext);
+                stringMatchers, senseGlossMatchers, executor, maxThreadCount, sourceContext, targetContext);
     }
 
     @Override
     public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(final IContext sourceContext, final IContext targetContext) throws ElementMatcherException {
         if (0 == getTotal()) {
-            setTotal((long) sourceContext.getNodesCount() * (long) targetContext.getNodesCount());
+            setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
         }
         log.debug("Running with maxThreadCount threads: " + maxThreadCount);
         final AtomicReference<ElementMatcherException> productionException = new AtomicReference<>(null);
 
-        final IContextMapping<IAtomicConceptOfLabel> mapping = mappingFactory.getACoLMappingInstance(sourceContext, targetContext);
+        final IContextMapping<IAtomicConceptOfLabel> mapping = mappingFactory.getConceptMappingInstance(sourceContext, targetContext);
 
-        for (Iterator<INode> i = sourceContext.getNodes(); i.hasNext(); ) {
+        for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             final INode sourceNode = i.next();
-            for (Iterator<INode> j = targetContext.getNodes(); j.hasNext(); ) {
+            for (Iterator<INode> j = targetContext.nodeIterator(); j.hasNext(); ) {
                 final INode targetNode = j.next();
-                for (Iterator<IAtomicConceptOfLabel> ii = sourceNode.getNodeData().getACoLs(); ii.hasNext(); ) {
-                    final IAtomicConceptOfLabel sourceACoL = ii.next();
-                    for (Iterator<IAtomicConceptOfLabel> jj = targetNode.getNodeData().getACoLs(); jj.hasNext(); ) {
+                for (final IAtomicConceptOfLabel sourceACoL : sourceNode.nodeData().getConcepts()) {
+                    for (final IAtomicConceptOfLabel targetACoL : targetNode.nodeData().getConcepts()) {
                         //noinspection ThrowableResultOfMethodCallIgnored
                         if (Thread.currentThread().isInterrupted() || null != productionException.get()) {
                             break;
                         }
-
-                        final IAtomicConceptOfLabel targetACoL = jj.next();
 
                         try {
                             threadLimiter.acquire();

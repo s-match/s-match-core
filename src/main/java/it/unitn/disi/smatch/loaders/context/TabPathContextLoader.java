@@ -79,9 +79,9 @@ public class TabPathContextLoader extends BaseFileContextLoader<IContext, INode>
 
     private INode findNode(INode curNode, String nodeName) {
         INode result = null;
-        for (Iterator<INode> i = curNode.getChildren(); i.hasNext(); ) {
+        for (Iterator<INode> i = curNode.childrenIterator(); i.hasNext(); ) {
             INode child = i.next();
-            if (nodeName.equals(child.getNodeData().getName())) {
+            if (nodeName.equals(child.nodeData().getName())) {
                 result = child;
                 break;
             }

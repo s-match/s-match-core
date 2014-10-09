@@ -1,11 +1,15 @@
 package it.unitn.disi.smatch.data.mappings;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,14 +35,22 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
 
     private static Integer relationToIndex(final char relation) {
         switch (relation) {
-            case IMappingElement.EQUIVALENCE: return 0;
-            case IMappingElement.LESS_GENERAL: return 1;
-            case IMappingElement.MORE_GENERAL: return 2;
-            case IMappingElement.DISJOINT: return 3;
-            case IMappingElement.ENTAILED_LESS_GENERAL: return 4;
-            case IMappingElement.ENTAILED_MORE_GENERAL: return 5;
-            case IMappingElement.ENTAILED_DISJOINT: return 6;
-            default: throw new IllegalStateException();
+            case IMappingElement.EQUIVALENCE:
+                return 0;
+            case IMappingElement.LESS_GENERAL:
+                return 1;
+            case IMappingElement.MORE_GENERAL:
+                return 2;
+            case IMappingElement.DISJOINT:
+                return 3;
+            case IMappingElement.ENTAILED_LESS_GENERAL:
+                return 4;
+            case IMappingElement.ENTAILED_MORE_GENERAL:
+                return 5;
+            case IMappingElement.ENTAILED_DISJOINT:
+                return 6;
+            default:
+                throw new IllegalStateException();
         }
     }
 
@@ -110,7 +122,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
     }
 
     @Override
-    public IContextMapping<IAtomicConceptOfLabel> getACoLMappingInstance(final IContext source, final IContext target) {
+    public IContextMapping<IAtomicConceptOfLabel> getConceptMappingInstance(final IContext source, final IContext target) {
         return new HashMapping<>(source, target);
     }
 
@@ -120,6 +132,7 @@ public class HashMapping<T> extends BaseMapping<T> implements IContextMapping<T>
     }
 
     @Override
+    @JsonIgnore
     public boolean isEmpty() {
         return entries.isEmpty();
     }

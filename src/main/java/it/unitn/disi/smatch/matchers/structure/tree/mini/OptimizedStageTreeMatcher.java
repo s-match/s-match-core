@@ -57,27 +57,27 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
             sourceNode.nodeData().setSource(true);
         }
 
-        Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<>();
-        Map<String, IAtomicConceptOfLabel> targetAcols = new HashMap<>();
+        Map<String, IAtomicConceptOfLabel> sourceACoLs = new HashMap<>();
+        Map<String, IAtomicConceptOfLabel> targetACoLs = new HashMap<>();
 
         // need another mapping because here we allow < and > between the same pair of nodes
         HashSet<IMappingElement<INode>> mapping = new HashSet<>();
 
         log.info("DJ...");
         treeDisjoint(sourceContext.getRoot(), targetContext.getRoot(),
-                acolMapping, sourceAcols, targetAcols, mapping);
+                acolMapping, sourceACoLs, targetACoLs, mapping);
         int dj = mapping.size();
         log.info("Links found DJ: " + dj);
 
         log.info("LG...");
         treeSubsumedBy(sourceContext.getRoot(), targetContext.getRoot(),
-                true, acolMapping, sourceAcols, targetAcols, mapping);
+                true, acolMapping, sourceACoLs, targetACoLs, mapping);
         int lg = mapping.size() - dj;
         log.info("Links found LG: " + lg);
 
         log.info("MG...");
         treeSubsumedBy(targetContext.getRoot(), sourceContext.getRoot(),
-                false, acolMapping, sourceAcols, targetAcols, mapping);
+                false, acolMapping, sourceACoLs, targetACoLs, mapping);
         int mg = mapping.size() - dj - lg;
         log.info("Links found MG: " + mg);
 
@@ -96,19 +96,19 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
 
     protected void treeDisjoint(INode n1, INode n2,
                                 IContextMapping<IAtomicConceptOfLabel> acolMapping,
-                                Map<String, IAtomicConceptOfLabel> sourceAcols,
-                                Map<String, IAtomicConceptOfLabel> targetAcols,
+                                Map<String, IAtomicConceptOfLabel> sourceACoLs,
+                                Map<String, IAtomicConceptOfLabel> targetACoLs,
                                 HashSet<IMappingElement<INode>> mapping) throws TreeMatcherException {
-        nodeTreeDisjoint(n1, n2, acolMapping, sourceAcols, targetAcols, mapping);
+        nodeTreeDisjoint(n1, n2, acolMapping, sourceACoLs, targetACoLs, mapping);
         for (Iterator<INode> i = n1.childrenIterator(); i.hasNext(); ) {
-            treeDisjoint(i.next(), n2, acolMapping, sourceAcols, targetAcols, mapping);
+            treeDisjoint(i.next(), n2, acolMapping, sourceACoLs, targetACoLs, mapping);
         }
     }
 
     protected void nodeTreeDisjoint(INode n1, INode n2,
                                     IContextMapping<IAtomicConceptOfLabel> acolMapping,
-                                    Map<String, IAtomicConceptOfLabel> sourceAcols,
-                                    Map<String, IAtomicConceptOfLabel> targetAcols,
+                                    Map<String, IAtomicConceptOfLabel> sourceACoLs,
+                                    Map<String, IAtomicConceptOfLabel> targetACoLs,
                                     HashSet<IMappingElement<INode>> mapping) throws TreeMatcherException {
         if (findRelation(n1.ancestorsIterator(), n2, IMappingElement.DISJOINT, mapping)) {
             // we skip n2 subtree, so adjust the counter
@@ -117,7 +117,7 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
             return;
         }
 
-        if (nodeMatcher.nodeDisjoint(acolMapping, sourceAcols, targetAcols, n1, n2)) {
+        if (nodeMatcher.nodeDisjoint(acolMapping, sourceACoLs, targetACoLs, n1, n2)) {
             addRelation(n1, n2, IMappingElement.DISJOINT, mapping);
             // we skip n2 subtree, so adjust the counter
             progress(n2.descendantCount());
@@ -127,14 +127,14 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
         progress();
 
         for (Iterator<INode> i = n2.childrenIterator(); i.hasNext(); ) {
-            nodeTreeDisjoint(n1, i.next(), acolMapping, sourceAcols, targetAcols, mapping);
+            nodeTreeDisjoint(n1, i.next(), acolMapping, sourceACoLs, targetACoLs, mapping);
         }
     }
 
     protected boolean treeSubsumedBy(INode n1, INode n2, boolean direction,
                                      IContextMapping<IAtomicConceptOfLabel> acolMapping,
-                                     Map<String, IAtomicConceptOfLabel> sourceAcols,
-                                     Map<String, IAtomicConceptOfLabel> targetAcols,
+                                     Map<String, IAtomicConceptOfLabel> sourceACoLs,
+                                     Map<String, IAtomicConceptOfLabel> targetACoLs,
                                      HashSet<IMappingElement<INode>> mapping) throws TreeMatcherException {
         if (findRelation(n1, n2, IMappingElement.DISJOINT, mapping)) {
             // we skip n1 subtree, so adjust the counter
@@ -144,14 +144,14 @@ public class OptimizedStageTreeMatcher extends BaseTreeMatcher implements IAsync
 
         progress();
 
-        if (!nodeMatcher.nodeSubsumedBy(n1, n2, acolMapping, sourceAcols, targetAcols)) {
+        if (!nodeMatcher.nodeSubsumedBy(n1, n2, acolMapping, sourceACoLs, targetACoLs)) {
             for (Iterator<INode> i = n1.childrenIterator(); i.hasNext(); ) {
-                treeSubsumedBy(i.next(), n2, direction, acolMapping, sourceAcols, targetAcols, mapping);
+                treeSubsumedBy(i.next(), n2, direction, acolMapping, sourceACoLs, targetACoLs, mapping);
             }
         } else {
             boolean lastNodeFound = false;
             for (Iterator<INode> i = n2.childrenIterator(); i.hasNext(); ) {
-                if (treeSubsumedBy(n1, i.next(), direction, acolMapping, sourceAcols, targetAcols, mapping)) {
+                if (treeSubsumedBy(n1, i.next(), direction, acolMapping, sourceACoLs, targetACoLs, mapping)) {
                     lastNodeFound = true;
                 }
             }

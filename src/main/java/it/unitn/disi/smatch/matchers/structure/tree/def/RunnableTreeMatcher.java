@@ -103,8 +103,8 @@ public class RunnableTreeMatcher extends DefaultTreeMatcher {
 
         final IContextMapping<INode> mapping = mappingFactory.getContextMappingInstance(sourceContext, targetContext);
 
-        final Map<String, IAtomicConceptOfLabel> sourceAcols = new ConcurrentHashMap<>();
-        final Map<String, IAtomicConceptOfLabel> targetAcols = new ConcurrentHashMap<>();
+        final Map<String, IAtomicConceptOfLabel> sourceACoLs = new ConcurrentHashMap<>();
+        final Map<String, IAtomicConceptOfLabel> targetACoLs = new ConcurrentHashMap<>();
 
         for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             final INode sourceNode = i.next();
@@ -127,7 +127,7 @@ public class RunnableTreeMatcher extends DefaultTreeMatcher {
                     public void run() {
                         try {
                             mapping.setRelation(sourceNode, targetNode, nodeMatcher.nodeMatch(acolMapping,
-                                    sourceAcols, targetAcols, sourceNode, targetNode));
+                                    sourceACoLs, targetACoLs, sourceNode, targetNode));
                         } catch (NodeMatcherException e) {
                             productionException.compareAndSet(null, e);
                         } finally {

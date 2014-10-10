@@ -116,7 +116,7 @@ public class OptimizedStageNodeMatcher extends BaseNodeMatcher implements INodeM
             } else {
                 //swap source, target and relation
                 HashMap<IAtomicConceptOfLabel, String> hashConceptNumber = new HashMap<>();
-                Object[] obj = mkAxioms(hashConceptNumber, targetACoLs, sourceACoLs, acolMapping, targetNode, sourceNode);
+                Object[] obj = mkAxioms(hashConceptNumber, sourceACoLs, targetACoLs, acolMapping, targetNode, sourceNode);
                 String axioms = (String) obj[0];
                 int num_of_axiom_clauses = (Integer) obj[1];
 

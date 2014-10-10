@@ -45,8 +45,8 @@ public class DefaultTreeMatcher extends BaseTreeMatcher implements IAsyncTreeMat
         // semantic relation for particular node matching task
         char relation;
 
-        Map<String, IAtomicConceptOfLabel> sourceAcols = new HashMap<>();
-        Map<String, IAtomicConceptOfLabel> targetAcols = new HashMap<>();
+        Map<String, IAtomicConceptOfLabel> sourceACoLs = new HashMap<>();
+        Map<String, IAtomicConceptOfLabel> targetACoLs = new HashMap<>();
 
         for (Iterator<INode> i = sourceContext.nodeIterator(); i.hasNext(); ) {
             INode sourceNode = i.next();
@@ -56,7 +56,7 @@ public class DefaultTreeMatcher extends BaseTreeMatcher implements IAsyncTreeMat
                 }
 
                 INode targetNode = j.next();
-                relation = nodeMatcher.nodeMatch(acolMapping, sourceAcols, targetAcols, sourceNode, targetNode);
+                relation = nodeMatcher.nodeMatch(acolMapping, sourceACoLs, targetACoLs, sourceNode, targetNode);
                 mapping.setRelation(sourceNode, targetNode, relation);
 
                 progress();

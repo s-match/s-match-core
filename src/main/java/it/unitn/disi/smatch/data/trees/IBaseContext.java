@@ -1,7 +1,6 @@
 package it.unitn.disi.smatch.data.trees;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Base context interface.

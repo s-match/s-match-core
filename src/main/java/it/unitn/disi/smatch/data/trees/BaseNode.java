@@ -36,7 +36,7 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
     protected Object userObject;
 
     // node counter to set unique node id during creation
-    protected static AtomicLong nodeCounter = new AtomicLong();
+    protected static final AtomicLong nodeCounter = new AtomicLong();
 
     // iterator which iterates over all parent nodes
     private final class AncestorsIterator implements Iterator<E> {

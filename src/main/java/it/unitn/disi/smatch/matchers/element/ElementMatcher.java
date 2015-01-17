@@ -10,7 +10,10 @@ import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
 import it.unitn.disi.smatch.oracles.ISenseMatcher;
 import it.unitn.disi.smatch.oracles.SenseMatcherException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -40,6 +43,8 @@ import java.util.List;
  */
 public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLabel>, IMappingElement<IAtomicConceptOfLabel>>
         implements IAsyncElementMatcher {
+
+    private static final Logger log = LoggerFactory.getLogger(ElementMatcher.class);
 
     protected final IMappingFactory mappingFactory;
     protected final ISenseMatcher senseMatcher;
@@ -179,6 +184,20 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
                         //to check the relation holding between two ACoLs represented by lists of WN senses and tokens
                         final char relation = getRelation(sourceACoL, targetACoL);
                         result.setRelation(sourceACoL, targetACoL, relation);
+
+
+                        if (log.isTraceEnabled()) {
+                            if (IMappingElement.IDK != relation) {
+                                log.trace(sourceNode.nodeData().getId() +
+                                                ".[" + sourceNode.nodeData().getName() + "]." +
+                                                sourceACoL.getId() + "." + sourceACoL.getToken() +
+                                                "\t" + relation + "\t" +
+                                                targetNode.nodeData().getId() +
+                                                ".[" + targetNode.nodeData().getName() + "]." +
+                                                targetACoL.getId() + "." + targetACoL.getToken()
+                                );
+                            }
+                        }
                     }
                 }
 
@@ -236,6 +255,13 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
                 }
             }
 
+            if (log.isTraceEnabled()) {
+                if (IMappingElement.IDK != relation) {
+                    log.trace(sourceACoL.getId() + "\t" + relation + "\t" + targetACoL.getId() +
+                            "\t\t" + sourceACoL.getToken() + "\t" + relation + "\t" + targetACoL.getToken());
+                }
+            }
+
             return relation;
         } catch (SenseMatcherException e) {
             throw new ElementMatcherException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
@@ -254,6 +280,12 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
         int i = 0;
         while ((relation == IMappingElement.IDK) && (i < stringMatchers.size())) {
             relation = stringMatchers.get(i).match(sourceLabel, targetLabel);
+            if (log.isTraceEnabled()) {
+                if (IMappingElement.IDK != relation) {
+                    String className = stringMatchers.get(i).getClass().getSimpleName();
+                    log.trace(className + ":\t" + sourceLabel + "\t" + relation + "\t" + targetLabel);
+                }
+            }
             i++;
         }
         return relation;
@@ -276,6 +308,15 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
                     int k = 0;
                     while ((relation == IMappingElement.IDK) && (k < senseGlossMatchers.size())) {
                         relation = senseGlossMatchers.get(k).match(sourceSense, targetSense);
+                        if (log.isTraceEnabled()) {
+                            if (IMappingElement.IDK != relation) {
+                                String className = senseGlossMatchers.get(k).getClass().getSimpleName();
+                                log.trace(className + "\t" + sourceSense.getId() + "\t" + relation + "\t" + targetSense.getId()
+                                        + "\t\t" + Arrays.toString(sourceSense.getLemmas().toArray())
+                                        + "\t" + relation
+                                        + "\t" + Arrays.toString(targetSense.getLemmas().toArray()));
+                            }
+                        }
                         k++;
                     }
                     return relation;

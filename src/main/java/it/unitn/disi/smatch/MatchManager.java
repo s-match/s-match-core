@@ -2,6 +2,7 @@ package it.unitn.disi.smatch;
 
 import it.unitn.disi.smatch.classifiers.IContextClassifier;
 import it.unitn.disi.smatch.data.ling.IAtomicConceptOfLabel;
+import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IContextMapping;
 import it.unitn.disi.smatch.data.mappings.IMappingFactory;
 import it.unitn.disi.smatch.data.trees.Context;
@@ -21,6 +22,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
+
+import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * MatchManager controls the process of matching, loads contexts and performs other auxiliary work.
@@ -239,6 +243,25 @@ public class MatchManager implements IMatchManager {
         log.info("Computing concepts at label...");
         contextPreprocessor.preprocess(context);
         log.info("Computing concepts at label finished: " + (System.currentTimeMillis() - start) + " ms");
+        if (log.isTraceEnabled()) {
+            for (Iterator<INode> i = context.nodeIterator(); i.hasNext(); ) {
+                INode node = i.next();
+                StringBuilder builder = new StringBuilder();
+                for (int j = 0; j < node.ancestorCount(); j++) {
+                    builder.append("\t");
+                }
+                String level = builder.toString() + "\t" + node.nodeData().getId() + "\t";
+                log.trace(level + node.nodeData().getName() + "\t" + node.nodeData().getLabelFormula());
+                for (IAtomicConceptOfLabel acol : node.nodeData().getConcepts()) {
+                    log.trace(level + acol.getId() + "\t" + acol.getLemma() + "\t" + acol.getToken());
+                    String acolId = level + acol.getId() + "\t";
+                    for (ISense sense : acol.getSenses()) {
+                        log.trace(acolId + sense.getId() + "\t" + Arrays.toString(sense.getLemmas().toArray()) + "\t" + sense.getGloss());
+                    }
+                }
+            }
+
+        }
     }
 
     public IContextPreprocessor getContextPreprocessor() {

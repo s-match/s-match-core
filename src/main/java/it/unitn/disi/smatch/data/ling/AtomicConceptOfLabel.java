@@ -15,11 +15,13 @@ import java.util.List;
  */
 public class AtomicConceptOfLabel extends IndexedObject implements IAtomicConceptOfLabel, Serializable {
 
+    // average polysemy in WordNet
+    private final static int AVERAGE_POLYSEMY = 2;
+
     private int id;
     private String token;
     private String lemma;
-    // due to average polysemy in WordNet
-    private List<ISense> senses = new ArrayList<>(2);
+    private List<ISense> senses = new ArrayList<>(AVERAGE_POLYSEMY);
 
     public String getToken() {
         return token;

@@ -36,6 +36,7 @@ public class RandomSampleMappingFilter extends BaseFilter implements IMappingFil
         IContextMapping<INode> result = mappingFactory.getContextMappingInstance(mapping.getSourceContext(), mapping.getTargetContext());
 
         //sampling
+        //what a shame... TODO implement reservoir sampling
         int oneIn = (mapping.size() / sampleSize) - (mapping.size() / (10 * sampleSize));
         Random r = new Random();
         if (log.isInfoEnabled()) {

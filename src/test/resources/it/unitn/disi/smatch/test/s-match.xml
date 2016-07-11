@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.1.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd">
+
+    <!--
+        Default S-Match configuration file for CLI and MatchingBasicGUI.
+    -->
+
+    <!-- enable ${name} properties resolution -->
+    <context:property-placeholder properties-ref="properties"/>
+    <util:properties id="properties"/>
+
+    <bean id="matchManager" class="it.unitn.disi.smatch.MatchManager">
+        <constructor-arg name="contextLoader" ref="contextLoader"/>
+        <constructor-arg name="contextRenderer" ref="contextRenderer"/>
+        <constructor-arg name="mappingLoader" ref="mappingLoader"/>
+        <constructor-arg name="mappingRenderer" ref="mappingRenderer"/>
+        <constructor-arg name="mappingFilter"><null /></constructor-arg>
+        <constructor-arg name="mappingFactory" ref="mappingFactory"/>
+        <constructor-arg name="contextPreprocessor" ref="contextPreprocessor"/>
+        <constructor-arg name="contextClassifier" ref="contextClassifier"/>
+        <constructor-arg name="elementMatcher" ref="elementMatcher"/>
+        <constructor-arg name="treeMatcher" ref="treeMatcher"/>
+    </bean>
+
+    <bean id="contextLoader" class="it.unitn.disi.smatch.loaders.context.SimpleXMLContextLoader">
+        <constructor-arg name="linguisticOracle" ref="linguisticOracle"/>
+    </bean>
+
+    <bean id="contextRenderer" class="it.unitn.disi.smatch.renderers.context.SimpleXMLContextRenderer"/>
+
+    <bean id="mappingLoader" class="it.unitn.disi.smatch.loaders.mapping.PlainMappingLoader">
+        <constructor-arg name="mappingFactory" ref="mappingFactory"/>
+    </bean>
+
+    <bean id="mappingRenderer" class="it.unitn.disi.smatch.renderers.mapping.PlainMappingRenderer"/>
+
+    <bean id="mappingFactory" class="it.unitn.disi.smatch.data.mappings.HashMapping"/>
+
+    <bean id="contextPreprocessor" class="it.unitn.disi.smatch.preprocessors.RunnableDefaultContextPreprocessor">
+        <constructor-arg name="senseMatcher" ref="senseMatcher"/>
+        <constructor-arg name="linguisticOracle" ref="linguisticOracle"/>
+    </bean>
+
+    <bean id="contextClassifier" class="it.unitn.disi.smatch.classifiers.CNFContextClassifier"/>
+
+    <bean id="elementMatcher" class="it.unitn.disi.smatch.matchers.element.RunnableElementMatcher">
+        <constructor-arg name="mappingFactory" ref="mappingFactory"/>
+        <constructor-arg name="senseMatcher" ref="senseMatcher"/>
+        <constructor-arg name="useWeakSemanticsElementLevelMatchersLibrary" value="true"/>
+        <constructor-arg name="stringMatchers">
+            <util:list>
+                <bean class="it.unitn.disi.smatch.matchers.element.string.Synonym"/>
+                <bean class="it.unitn.disi.smatch.matchers.element.string.Prefix"/>
+                <bean class="it.unitn.disi.smatch.matchers.element.string.Suffix"/>
+                <bean class="it.unitn.disi.smatch.matchers.element.string.NGram"/>
+                <bean class="it.unitn.disi.smatch.matchers.element.string.EditDistanceOptimized"/>
+            </util:list>
+        </constructor-arg>
+        <constructor-arg name="senseGlossMatchers"><null /></constructor-arg>
+    </bean>
+
+    <bean id="satSolver" class="it.unitn.disi.smatch.deciders.CachingSolver">
+        <constructor-arg name="satSolver">
+            <bean class="it.unitn.disi.smatch.deciders.SAT4J"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="nodeMatcher" class="it.unitn.disi.smatch.matchers.structure.node.DefaultNodeMatcher">
+        <constructor-arg name="satSolver" ref="satSolver"/>
+    </bean>
+
+    <bean id="treeMatcher" class="it.unitn.disi.smatch.matchers.structure.tree.def.RunnableTreeMatcher">
+        <constructor-arg name="nodeMatcher" ref="nodeMatcher"/>
+        <constructor-arg name="mappingFactory" ref="mappingFactory"/>
+    </bean>
+
+<!-- 
+    <bean id="linguisticOracle" class="it.unitn.disi.smatch.oracles.uby.SmubyOracle">
+    </bean>
+ -->
+ 
+    <alias name="linguisticOracle" alias="senseMatcher"/>
+
+</beans>

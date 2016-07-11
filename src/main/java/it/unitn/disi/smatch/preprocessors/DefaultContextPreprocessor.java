@@ -123,9 +123,10 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
      */
     @Override
     public void preprocess(IContext context) throws ContextPreprocessorException {
-        if (0 == getTotal()) {
-            setTotal(4 * context.nodesCount());
-        }
+        
+        setTotal(4 * context.nodesCount());        
+        setProgress(0);
+        
         Set<String> unrecognizedWords = new HashSet<>();
 
         context = buildCLabs(context, unrecognizedWords);
@@ -133,6 +134,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
         senseFiltering(context);
 
         reportUnrecognizedWords(unrecognizedWords);
+                
     }
 
     protected void reportUnrecognizedWords(Set<String> unrecognizedWords) {

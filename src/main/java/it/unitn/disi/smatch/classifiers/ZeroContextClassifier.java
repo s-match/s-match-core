@@ -8,7 +8,7 @@ import it.unitn.disi.smatch.data.trees.IContext;
  * @since 2.0.0
  * @author <a rel="author" href="http://davidleoni.it/">David Leoni</a>
  */
-public class DummyContextClassifier extends BaseContextClassifier {
+public class ZeroContextClassifier extends BaseContextClassifier {
 
     @Override
     protected void process(IContext context) throws ContextClassifierException {          

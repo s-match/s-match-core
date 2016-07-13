@@ -8,7 +8,7 @@ import it.unitn.disi.smatch.SMatchException;
 import it.unitn.disi.smatch.data.trees.Context;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
-import it.unitn.disi.smatch.oracles.DummyLinguisticOracle;
+import it.unitn.disi.smatch.oracles.ZeroLinguisticOracle;
 import it.unitn.disi.smatch.preprocessors.DefaultContextPreprocessor;
 
 /**
@@ -30,7 +30,7 @@ public class DefaultContextPreprocessorTest {
     @Test
     public void testProgress() throws SMatchException {
               
-        DummyLinguisticOracle oracle = new DummyLinguisticOracle();
+        ZeroLinguisticOracle oracle = new ZeroLinguisticOracle();
                       
         DefaultContextPreprocessor preprocessor = new DefaultContextPreprocessor(
                 oracle, // senseMatcher

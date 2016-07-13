@@ -2,7 +2,7 @@ package it.unitn.disi.smatch.oracles;
 
 import java.util.Collections;
 import java.util.List;
-import it.unitn.disi.smatch.data.ling.DummySense;
+import it.unitn.disi.smatch.data.ling.ZeroSense;
 import it.unitn.disi.smatch.data.ling.ISense;
 import it.unitn.disi.smatch.data.mappings.IMappingElement;
 import it.unitn.disi.smatch.oracles.ILinguisticOracle;
@@ -16,9 +16,9 @@ import it.unitn.disi.smatch.oracles.SenseMatcherException;
  * @since 2.0.0
  * @author <a rel="author" href="http://davidleoni.it/">David Leoni</a>
  */
-public class DummyLinguisticOracle implements ILinguisticOracle, ISenseMatcher {      
+public class ZeroLinguisticOracle implements ILinguisticOracle, ISenseMatcher {      
 
-    public DummyLinguisticOracle(){                
+    public ZeroLinguisticOracle(){                
     }
     
     @Override
@@ -38,7 +38,7 @@ public class DummyLinguisticOracle implements ILinguisticOracle, ISenseMatcher {
 
     @Override
     public ISense createSense(String id) throws LinguisticOracleException {
-        return new DummySense(id);
+        return new ZeroSense(id);
     }
 
     @Override

@@ -6,11 +6,11 @@ package it.unitn.disi.smatch.data.ling;
  * @since 2.0.0
  * @author <a rel="author" href="http://davidleoni.it/">David Leoni</a> 
  */
-public class DummySense extends Sense {
+public class ZeroSense extends Sense {
 
     private static final long serialVersionUID = 1L;
 
-    public DummySense(String id) {
+    public ZeroSense(String id) {
         super(id);
     }       
 

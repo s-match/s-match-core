@@ -9,10 +9,10 @@ import it.unitn.disi.smatch.MatchManager;
 import it.unitn.disi.smatch.SMatchException;
 import it.unitn.disi.smatch.classifiers.BaseContextClassifier;
 import it.unitn.disi.smatch.classifiers.ContextClassifierException;
-import it.unitn.disi.smatch.classifiers.DummyContextClassifier;
+import it.unitn.disi.smatch.classifiers.ZeroContextClassifier;
 import it.unitn.disi.smatch.data.trees.IContext;
 import it.unitn.disi.smatch.data.trees.INode;
-import it.unitn.disi.smatch.oracles.DummyLinguisticOracle;
+import it.unitn.disi.smatch.oracles.ZeroLinguisticOracle;
 import it.unitn.disi.smatch.preprocessors.DefaultContextPreprocessor;
 
 /**
@@ -51,7 +51,7 @@ public class MatchManagerTest {
         log.info("Creating MatchManager...");
               
         
-        DummyLinguisticOracle oracle = new DummyLinguisticOracle();
+        ZeroLinguisticOracle oracle = new ZeroLinguisticOracle();
                       
         IMatchManager mm = new MatchManager(null, //contextLoader,                
                 null, // contextRenderer
@@ -62,7 +62,7 @@ public class MatchManagerTest {
                 new DefaultContextPreprocessor(
                         oracle, // senseMatcher
                         oracle), // linguisticOracle)
-                new DummyContextClassifier(), // contextClassifier
+                new ZeroContextClassifier(), // contextClassifier
                 null, // elementMatcher
                 null); // treeMatcher)
         

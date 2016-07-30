@@ -54,6 +54,76 @@ public class AsyncMatchManager extends MatchManager implements IAsyncMatchManage
     private static Executor eventExecutor;
     private static ExecutorService taskExecutor;
 
+    public class Builder {
+        private IBaseContextLoader contextLoader;
+        private IBaseContextRenderer contextRenderer;
+        private IMappingLoader mappingLoader;
+        private IMappingRenderer mappingRenderer;
+        private IMappingFilter mappingFilter;
+        private IMappingFactory mappingFactory;
+        private IContextPreprocessor contextPreprocessor;
+        private IContextClassifier contextClassifier;
+        private IElementMatcher elementMatcher;
+        private ITreeMatcher treeMatcher;
+
+        public Builder contextLoader(IBaseContextLoader contextLoader) {
+            this.contextLoader = contextLoader;
+            return this;
+        }
+
+        public Builder contextRenderer(IBaseContextRenderer contextRenderer) {
+            this.contextRenderer = contextRenderer;
+            return this;
+        }
+
+        public Builder mappingLoader(IMappingLoader mappingLoader) {
+            this.mappingLoader = mappingLoader;
+            return this;
+        }
+
+        public Builder mappingRenderer(IMappingRenderer mappingRenderer) {
+            this.mappingRenderer = mappingRenderer;
+            return this;
+        }
+
+        public Builder mappingFilter(IMappingFilter mappingFilter) {
+            this.mappingFilter = mappingFilter;
+            return this;
+        }
+
+        public Builder mappingFactory(IMappingFactory mappingFactory) {
+            this.mappingFactory = mappingFactory;
+            return this;
+        }
+
+        public Builder contextPreprocessor(IContextPreprocessor contextPreprocessor) {
+            this.contextPreprocessor = contextPreprocessor;
+            return this;
+        }
+
+        public Builder contextClassifier(IContextClassifier contextClassifier) {
+            this.contextClassifier = contextClassifier;
+            return this;
+        }
+
+        public Builder elementMatcher(IElementMatcher elementMatcher) {
+            this.elementMatcher = elementMatcher;
+            return this;
+        }
+
+        public Builder treeMatcher(ITreeMatcher treeMatcher) {
+            this.treeMatcher = treeMatcher;
+            return this;
+        }
+
+        public MatchManager build() {
+            return new AsyncMatchManager(contextLoader, contextRenderer,
+                    mappingLoader, mappingRenderer, mappingFilter, mappingFactory,
+                    contextPreprocessor, contextClassifier,
+                    elementMatcher, treeMatcher);
+        }
+    }
+
     public AsyncMatchManager(IBaseContextLoader contextLoader,
                              IBaseContextRenderer contextRenderer,
                              IMappingLoader mappingLoader,

@@ -205,7 +205,21 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
         }
     }
 
+    @Override
+    public List<E> getModifiableChildren() {
+        if (null != children) {
+            return children;
+        } else {
+            return Collections.emptyList();
+        }
+    }
+    
     public void setChildren(List<E> children) {
+
+        for (E child : children){
+            checkChild(child);
+        }
+        
         this.children = children;
     }
 
@@ -233,12 +247,9 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
     @Override
     @SuppressWarnings({"unchecked"})
     public void addChild(int index, E child) {
-        if (null == child) {
-            throw new IllegalArgumentException("new child is null");
-        } else if (isAncestor(child)) {
-            throw new IllegalArgumentException("new child is an ancestor");
-        }
-
+        
+        checkChild(child);
+        
         IBaseNode oldParent = child.getParent();
 
         if (null != oldParent) {
@@ -484,4 +495,17 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
     private boolean isChild(E node) {
         return null != node && 0 != getChildCount() && node.getParent() == this && -1 < children.indexOf(node);
     }
+    
+    /**
+     * @since 2.0.0
+     * @throws IllegalArgumentException
+     */
+    private void checkChild(E child) {
+        if (null == child) {
+            throw new IllegalArgumentException("new child is null");
+        } else if (isAncestor(child)) {
+            throw new IllegalArgumentException("new child is an ancestor");
+        }
+    }
+
 }

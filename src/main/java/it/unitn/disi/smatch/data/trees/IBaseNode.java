@@ -42,6 +42,16 @@ public interface IBaseNode<E extends IBaseNode, I extends IBaseNodeData> extends
      * @return unmodifiable list of receivers children
      */
     List<E> getChildren();
+    
+    /**
+     * Returns a list of children that can be modified. 
+     * Notice that acting on this list won't fire events.
+     * 
+     * @see {@link #setChildren(List)}
+     * @see {@link #children()}
+     * @since 2.0.0
+     */
+    public List<E> getModifiableChildren();
 
     /**
      * Sets list of children.

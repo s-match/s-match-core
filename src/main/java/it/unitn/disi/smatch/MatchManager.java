@@ -66,7 +66,7 @@ public class MatchManager implements IMatchManager {
         return (IMatchManager) applicationContext.getBean("matchManager");
     }
 
-    public class Builder {
+    public static class Builder {
         private IBaseContextLoader contextLoader;
         private IBaseContextRenderer contextRenderer;
         private IMappingLoader mappingLoader;

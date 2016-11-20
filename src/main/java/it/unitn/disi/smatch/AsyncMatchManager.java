@@ -54,7 +54,7 @@ public class AsyncMatchManager extends MatchManager implements IAsyncMatchManage
     private static Executor eventExecutor;
     private static ExecutorService taskExecutor;
 
-    public class Builder {
+    public static class Builder {
         private IBaseContextLoader contextLoader;
         private IBaseContextRenderer contextRenderer;
         private IMappingLoader mappingLoader;

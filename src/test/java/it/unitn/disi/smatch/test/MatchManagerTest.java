@@ -16,70 +16,45 @@ import it.unitn.disi.smatch.oracles.ZeroLinguisticOracle;
 import it.unitn.disi.smatch.preprocessors.DefaultContextPreprocessor;
 
 /**
- * @since 2.0.0
  * @author <a rel="author" href="http://davidleoni.it/">David Leoni</a>
- *
+ * @since 2.0.0
  */
 public class MatchManagerTest {
-    
-    private static final Logger log = LoggerFactory.getLogger(MatchManagerTest.class);      
 
-    /* keep here for reference 
-    IMatchManager mm = new MatchManager(
-          null, //contextLoader,   
-          null, // contextRenderer,
-          null, // mappingLoader,
-          null, // mappingRenderer,
-          null, // mappingFilter,
-          null, // mappingFactory,
-          null, // contextPreprocessor,
-          null, // contextClassifier,
-          null, // elementMatcher,
-          null); // treeMatcher) {
-     */
-    
-    
+    private static final Logger log = LoggerFactory.getLogger(MatchManagerTest.class);
+
     /**
-     * @since 2.0.0
      * @author <a rel="author" href="http://davidleoni.it/">David Leoni</a>
-     *
+     * @since 2.0.0
      */
     // TODO IMPROVE IT!
     @Test
     public void testMatchManager() throws SMatchException {
         log.info("Starting example...");
         log.info("Creating MatchManager...");
-              
-        
-        ZeroLinguisticOracle oracle = new ZeroLinguisticOracle();
-                      
-        IMatchManager mm = new MatchManager(null, //contextLoader,                
-                null, // contextRenderer
-                null, // mappingLoader
-                null, // mappingRenderer
-                null, // mappingFilter
-                null, // mappingFactory
-                new DefaultContextPreprocessor(
-                        oracle, // senseMatcher
-                        oracle), // linguisticOracle)
-                new ZeroContextClassifier(), // contextClassifier
-                null, // elementMatcher
-                null); // treeMatcher)
-        
-        String example = "Courses";        
+
+
+        final ZeroLinguisticOracle oracle = new ZeroLinguisticOracle();
+
+        final IMatchManager mm = new MatchManager.Builder()
+                .contextPreprocessor(new DefaultContextPreprocessor(oracle, oracle))
+                .contextClassifier(new ZeroContextClassifier())
+                .build();
+
+        String example = "Courses";
         IContext s = mm.createContext();
         s.createRoot(example);
-        
+
         IContext t = mm.createContext();
         INode root = t.createRoot("Course");
         INode node = root.createChild("College of Arts and Sciences");
         node.createChild("English");
-        
+
         node = root.createChild("College Engineering");
         node.createChild("Civil and Environmental Engineering");
-                
+
         mm.offline(s);
-                
+
         mm.offline(t);
     }
 }

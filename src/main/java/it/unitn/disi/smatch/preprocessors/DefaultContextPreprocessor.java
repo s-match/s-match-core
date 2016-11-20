@@ -123,8 +123,7 @@ public class DefaultContextPreprocessor extends BaseContextPreprocessor implemen
      */
     @Override
     public void preprocess(IContext context) throws ContextPreprocessorException {
-        
-        setTotal(4 * context.nodesCount());        
+        setTotal(4 * context.nodesCount());
         setProgress(0);
         
         Set<String> unrecognizedWords = new HashSet<>();

@@ -13,5 +13,4 @@ public class ZeroSense extends Sense {
     public ZeroSense(String id) {
         super(id);
     }       
-
 }

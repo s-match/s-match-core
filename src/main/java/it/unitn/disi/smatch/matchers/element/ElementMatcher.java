@@ -162,7 +162,6 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
     }
 
     public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws ElementMatcherException {
-        
         setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
         setProgress(0);
         // Calculates relations between all ACoLs in both contexts and produces a mapping between them.

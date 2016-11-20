@@ -36,9 +36,9 @@ public class DefaultTreeMatcher extends BaseTreeMatcher implements IAsyncTreeMat
     }
 
     public IContextMapping<INode> treeMatch(IContext sourceContext, IContext targetContext, IContextMapping<IAtomicConceptOfLabel> acolMapping) throws TreeMatcherException {
-        if (0 == getTotal()) {
-            setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
-        }
+        
+        setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());       
+        setProgress(0);
 
         IContextMapping<INode> mapping = mappingFactory.getContextMappingInstance(sourceContext, targetContext);
 

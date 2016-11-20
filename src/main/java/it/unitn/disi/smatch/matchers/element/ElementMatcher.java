@@ -162,9 +162,9 @@ public class ElementMatcher extends AsyncTask<IContextMapping<IAtomicConceptOfLa
     }
 
     public IContextMapping<IAtomicConceptOfLabel> elementLevelMatching(IContext sourceContext, IContext targetContext) throws ElementMatcherException {
-        if (0 == getTotal()) {
-            setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
-        }
+        
+        setTotal((long) sourceContext.nodesCount() * (long) targetContext.nodesCount());
+        setProgress(0);
         // Calculates relations between all ACoLs in both contexts and produces a mapping between them.
         // Corresponds to Step 3 of the semantic matching algorithm.
 

@@ -126,9 +126,9 @@ public class RunnableDefaultContextPreprocessor extends DefaultContextPreprocess
     @Override
     public void preprocess(IContext context) throws ContextPreprocessorException {
         log.debug("Running with maxThreadCount threads: " + maxThreadCount);
-        if (0 == getTotal()) {
-            setTotal(4 * context.nodesCount());
-        }
+        setTotal(4 * context.nodesCount());
+        setProgress(0);
+
         Set<String> unrecognizedWords = new ConcurrentSkipListSet<>();
 
         context = buildCLabs(context, unrecognizedWords);

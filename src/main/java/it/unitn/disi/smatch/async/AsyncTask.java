@@ -282,11 +282,12 @@ public abstract class AsyncTask<T, V> implements RunnableFuture<T> {
      * the value {@code 3}.
      *
      * @param progress the progress value to set
-     * @throws IllegalArgumentException is value not from 0 to 100
+     * @throws IllegalArgumentException is value not from 0 to {@link #getTotal() total}
      */
     protected final void setProgress(long progress) {
         if (progress < 0 || (total > 0 && progress > total)) {
-            throw new IllegalArgumentException("the value should be from 0 to " + Long.toString(total));
+            throw new IllegalArgumentException("the value should be from 0 to " + Long.toString(total) 
+                                                + ", found instead: " + progress);
         }
         if (this.progress == progress) {
             return;

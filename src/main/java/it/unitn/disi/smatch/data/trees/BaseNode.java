@@ -215,7 +215,6 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
     }
     
     public void setChildren(List<E> children) {
-
         for (E child : children){
             checkChild(child);
         }
@@ -247,7 +246,6 @@ public class BaseNode<E extends IBaseNode, I extends IBaseNodeData> extends Inde
     @Override
     @SuppressWarnings({"unchecked"})
     public void addChild(int index, E child) {
-        
         checkChild(child);
         
         IBaseNode oldParent = child.getParent();

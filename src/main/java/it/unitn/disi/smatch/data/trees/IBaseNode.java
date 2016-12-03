@@ -43,18 +43,11 @@ public interface IBaseNode<E extends IBaseNode, I extends IBaseNodeData> extends
      */
     List<E> getChildren();
     
-    /**
-     * Returns a list of children that can be modified. 
-     * Notice that acting on this list won't fire events.
-     * 
-     * @see {@link #setChildren(List)}
-     * @see {@link #children()}
-     * @since 2.0.0
-     */
-    public List<E> getModifiableChildren();
 
     /**
-     * Sets list of children.
+     * Sets list of children. Implementations should avoid storing
+     * directly the container to prevent accidental further changes
+     * by the caller.
      *
      * @param children new list of children
      */
@@ -94,11 +87,13 @@ public interface IBaseNode<E extends IBaseNode, I extends IBaseNodeData> extends
      * Removes the child at index from the receiver.
      *
      * @param index index of a child to remove
+     * 
+     * @throws IndexOutOfBoundsException - if the index is out of range (index < 0 || index >= size())
      */
     void removeChild(int index);
 
     /**
-     * Removes node from the receiver.
+     * Removes node from the receiver. If node is not present, does nothing.
      *
      * @param node child to remove
      */

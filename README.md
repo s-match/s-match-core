@@ -1,7 +1,7 @@
 # About
 
 S-Match is a framework for semantic matching algorithms.
-To learn more about S-Match visit: [semanticmatching.org](http://semanticmatching.org/)
+To learn more about S-Match visit: [semanticmatching.eu](http://semanticmatching.eu/)
 
 # Getting started
 
@@ -35,4 +35,4 @@ Run ```bin\s-match-gui.bat``` or ```bin/s-match-gui```.
 
 ## Documentation
 
-S-Match is accompanied by [S-Match Javadocs](http://semanticmatching.org/javadocs/) and [S-Match Wiki](https://github.com/s-match/s-match-core/wiki/).
+S-Match is accompanied by [S-Match Javadocs](http://semanticmatching.eu/javadocs/) and [S-Match Wiki](https://github.com/s-match/s-match-core/wiki/).
